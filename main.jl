@@ -1,5 +1,7 @@
 module sim_dumbbell
 using DistributedArrays
+using Distributed
+using Statistics
 
     export rk_evolve,manypart
     
@@ -37,9 +39,9 @@ using DistributedArrays
     function rhs(x,t,dt,tt,grav)
         x1 = x[1];
         x2 = x[2];
-        g = 0.1;
+        g = 0.01;
         k = 1;
-        u = 0.1;
+        u = 1.;
         t2 = 1;
         t1 = 1 + tt*t2;
 
@@ -78,7 +80,7 @@ using DistributedArrays
     function manypart(N,x1i,x2i,dt,nsteps,tt,grav)
         xs = @DArray[rk_evolve(x1i,x2i,dt,nsteps,tt,grav)[1] for j=1:N];
         q = sum(xs)./N;
-        return q
+        return q,xs
     end
 
     function testgrav()
