@@ -6,10 +6,21 @@ using Statistics
     export rk_evolve,manypart
     
     function extgpot(x,u)
+        if x<0
+            x = -x;
+            flag = true;
+        else
+            flag = false;
+        end
+
         if x%10<9
             out = u/9;
         else
             out = -u;
+        end
+
+        if flag
+            x = -x;
         end
 
         #if x%10<5
