@@ -135,12 +135,12 @@ using NPZ
         gs = LinRange(0,.3,40);
         sl = zeros(40,1);
         t = LinRange(0,100,100000);
-        for i = 1:size(gs,1)
+        for i = 1::size(gs,1)
             print("Potential = $(pot), dT = $(tt), Tm = $(tmin), Gravity = $(gs[i])\n");
             q,xs = manypart(200,0,10,0.001,100000,tt,gs[i],pot,tmin);
-            sl(i),inter = linfit(t[100:end],q[100:end,2]);
+            sl[i],inter = linfit(t[100:end],q[100:end,2]);
         end
-        return sl(i)
+        return sl
     end
 
 
