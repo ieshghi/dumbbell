@@ -3,7 +3,7 @@ using DistributedArrays
 using Distributed
 using Statistics
 using NPZ
-
+using PyPlot
     export rk_evolve,manypart
 
     function extpot(x,u,pottype = 0)
@@ -171,5 +171,42 @@ using NPZ
     npzwrite("./data/sl3_cold.npz",sl3_cold);
     end
 
+    function plotres(pot,hot,tt)
+     if pot == 0
+         a = npzread("./data/sl1_hot.npz");
+         b = npzread("./data/sl1_cold.npz");
+     elseif pot == 1
+         a = npzread("./data/sl2_hot.npz");
+         b = npzread("./data/sl2_cold.npz");
+     elseif pot == 2
+         a = npzread("./data/sl3_hot.npz");
+         b = npzread("./data/sl3_cold.npz");
+     end
+     if hot == 1
+        data = a;
+     elseif hot == 0
+        data = b;
+     end
+
+     gs = LinRange(0,0.3,40);
+
+     if tt == 0
+         ind = 1;
+     elseif tt == 1
+         ind = 2;
+     elseif tt == 2
+         ind = 3;
+     elseif tt == 4
+         ind = 4;
+     elseif tt == 5
+         ind = 5;
+     elseif tt == 6
+         ind = 6;
+     end
+     plot(gs,data[:,ind],label="dT = %.2f"%(tt))
+     ylabel("Slope")
+     xlabel("Gravity")
+     
+    end
 
 end
