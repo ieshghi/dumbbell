@@ -132,13 +132,13 @@ using PyPlot
     end
 
     function getgrav(pot,tt,tmin)
-        gs = LinRange(0,.3,40);
+        gs = LinRange(0,.05,40);
         sl = zeros(40,1);
-        t = LinRange(0,100,100000);
+        t = LinRange(0,10000,10000000);
         for i = 1:size(gs,1)
             print("Potential = $(pot), dT = $(tt), Tm = $(tmin), Gravity = $(gs[i])\n");
-            q,xs = manypart(200,0,10,0.001,100000,tt,gs[i],pot,tmin);
-            sl[i],inter = linfit(t[100:end],q[100:end,2]);
+            q,xs = manypart(20,0,10,0.001,10000000,tt,gs[i],pot,tmin);
+            sl[i],inter = linfit(t[1000:end],q[1000:end,2]);
         end
         return sl
     end
@@ -146,29 +146,14 @@ using PyPlot
 
     function runsim()
 
-    sl1_hot = zeros(40,6);
-    sl1_cold = zeros(40,6);
-    sl2_hot = zeros(40,6);
-    sl2_cold = zeros(40,6);
-    sl3_hot = zeros(40,6);
-    sl3_cold = zeros(40,6);
+    sl1_cold_smooth = zeros(40,4);
 
-    tts = [0,1,2,4,5,6];
+    tts = [0,2,4,6];
 
-    for i = 1:6
-        sl1_hot[:,i] = getgrav(0,tts[i],1);
-        sl1_cold[:,i] = getgrav(0,tts[i],.1);
-        sl2_hot[:,i] = getgrav(1,tts[i],1);
-        sl2_cold[:,i] = getgrav(1,tts[i],.1);
-        sl3_hot[:,i] = getgrav(2,tts[i],1);
-        sl3_cold[:,i] = getgrav(2,tts[i],.1);
+    for i = 1:4
+        sl1_cold_smooth[:,i] = getgrav(0,tts[i],.1);
     end
-    npzwrite("./data/sl1_hot.npz",sl1_hot);
-    npzwrite("./data/sl1_cold.npz",sl1_cold);
-    npzwrite("./data/sl2_hot.npz",sl2_hot);
-    npzwrite("./data/sl2_cold.npz",sl2_cold);
-    npzwrite("./data/sl3_hot.npz",sl3_hot);
-    npzwrite("./data/sl3_cold.npz",sl3_cold);
+    npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
     end
 
     function plotres(pot,hot,tt)
