@@ -3,7 +3,6 @@ using DistributedArrays
 using Distributed
 using Statistics
 using NPZ
-using PyPlot
     export rk_evolve,manypart
 
     function extpot(x,u,pottype = 0)
@@ -11,6 +10,7 @@ using PyPlot
         # 0: sawtooth
         # 1: four sines that look like a sawtooth
         # 2: quadratics that look like a sawtooth
+        # 3: flat potential
 
         if pottype == 0
             z = ((x%10+10)%10);
@@ -28,7 +28,10 @@ using PyPlot
             else
                 out = u*(z-9)^2;
             end
+        elseif pottype == 3
+            out = 0;
         end
+
         return out
     end
     
@@ -46,7 +49,7 @@ using PyPlot
                 out = -u;
             end
         elseif pottype == 1
-            out = (-1)*(cos(pi*(x)/5)+cos(2*pi*(x)/5)/2+cos(3*pi*(x)/5)/3+cos(4*pi*(x)/5)/4+cos(5*pi*x/5)/5)/2;
+            out = (-1)*u*(cos(pi*(x)/5)+cos(2*pi*(x)/5)/2+cos(3*pi*(x)/5)/3+cos(4*pi*(x)/5)/4+cos(5*pi*x/5)/5)/2;
         elseif pottype == 2
             z = ((x%10+10)%10);
             if z<9
@@ -54,6 +57,8 @@ using PyPlot
             else
                 out = -2*u*(z-9);
             end
+        elseif pottype == 3
+            out = 0;
         end
         return out
     end
@@ -62,59 +67,85 @@ using PyPlot
         return k*(x1-x2);
     end
 
-    function xdot_atherm(x1,x2,g,k,u)
-        force = [-sprgpot(x1,x2,k) - extgpot(x1,u),sprgpot(x1,x2,k)-extgpot(x2,u)];
-        return force./g;
-    end
-    function xdot(x1,x2,g,k,u,t1,t2,grav,dt,pottype)
-        thermvec = sqrt(2g/dt).*[sqrt(t1).*randn(1)[1],sqrt(t2).*randn(1)[1]]
-        force = [-sprgpot(x1,x2,k) - extgpot(x1,u,pottype) + thermvec[1],sprgpot(x1,x2,k)-extgpot(x2,u,pottype) + thermvec[2]]-grav.*ones(2);
+    function xdot(x1,x2,g,k,u,grav,pottype)
+        force = [-sprgpot(x1,x2,k) - extgpot(x1,u,pottype) ,sprgpot(x1,x2,k)-extgpot(x2,u,pottype) ]-grav.*ones(2);
         return force./g;
     end
 
-    function rhs(x,t,dt,tt,grav,pottype,tmin)
+    function rhs(x,t,grav,pottype,g)
         x1 = x[1];
         x2 = x[2];
-        g = 0.01;
         k = .01;
         u = 1.;
-        t2 = tmin;
-        t1 = tmin + tt;
 
         #                                    #
         #   Change physical parameters here  #
         #                                    #
 
-        return xdot(x1,x2,g,k,u,t1,t2,grav,dt,pottype)
-        #return xdot_atherm(x1,x2,g,k,u,x0)
+        return xdot(x1,x2,g,k,u,grav,pottype)
     end
 
-    function rk_evolve(x1i,x2i,dt,nsteps,tt,grav,pottype,tmin)
+    function rk_evolve(x1i,x2i,dt,nsteps,tmin,tt,grav,pottype) #Naive Runge-Kutta. Seems to be unreliable.
         x = zeros(nsteps,2);
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
+
+        #                                   #
+        #             And Here              #
+        #                                   #
+
+        g = 0.01;
+        t1 = tmin;
+        t2 = tmin + tt;
+
         for i = 2:nsteps
-            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,tt,grav,pottype,tmin);
+            thermvec = sqrt(2g/dt).*[sqrt(t1).*randn(1)[1],sqrt(t2).*randn(1)[1]];
+            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,grav,pottype,g);
+            x[i,:] += thermvec;
         end
         return x,t
     end
 
-    function rkint(x,t,dt,tt,grav,pottype,tmin)
+    function rkint(x,t,dt,grav,pottype,g) #Naive Runge-Kutta. Seems to be unreliable.
         h = dt;
         tm = t;
-        k1 = h.*rhs(x,tm,h,tt,grav,pottype,tmin);
-        k2 = h.*rhs((x+k1*1/2),(tm+h*1/2),h,tt,grav,pottype,tmin);
-        k3 = h.*rhs((x+k2*1/2),(tm+h*1/2),h,tt,grav,pottype,tmin);
-        k4 = h.*rhs((x+k3),(tm+h),h,tt,grav,pottype,tmin);
+        k1 = h.*rhs(x,tm,grav,pottype,g);
+        k2 = h.*rhs((x+k1*1/2),(tm+h*1/2),grav,pottype,g);
+        k3 = h.*rhs((x+k2*1/2),(tm+h*1/2),grav,pottype,g);
+        k4 = h.*rhs((x+k3),(tm+h),grav,pottype,g);
         x += 1/6*(k1 + 2*k2 + 2*k3 + k4);
         tm = tm+h;
         ynew = x;
         tnew = tm;
         return ynew,tnew
     end
-    
+
+
+    function rk_evolve_sde(x1i,x2i,dt,nsteps,tmin,tt,grav,pottype)
+        x = zeros(nsteps,2);
+        t = zeros(nsteps);
+        x[1,:] = [x1i,x2i];
+
+        #                                   #
+        #             And Here              #
+        #                                   #
+
+        g = 10;
+        t1 = tmin;
+        t2 = tmin + tt;
+        b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)];
+        for i = 2:nsteps
+            #a = rhs(x[i-1,:],t[i-1],grav,pottype,g);
+            dw = randn(2);
+            #x[i,:] = x[i-1,:] + a*dt + b.*dw;            
+            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,grav,pottype,g) ;
+            x[i,:] += b.*dw;
+        end
+        return x,t
+    end
+
     function manypart(N,x1i,x2i,dt,nsteps,tt,grav,pottype = 0,tmin = 1)
-        xs = @DArray[rk_evolve(x1i,x2i,dt,nsteps,tt,grav,pottype,tmin)[1] for j=1:N];
+        xs = @DArray[rk_evolve_sde(x1i,x2i,dt,nsteps,tmin,tt,grav,pottype)[1] for j=1:N];
         q = sum(xs)./N;
         return q,xs
     end
@@ -131,14 +162,23 @@ using PyPlot
         return slope, intercept
     end
 
-    function getgrav(pot,tt,tmin)
-        gs = LinRange(0,.3,40);
+    function getgrav(pot,tt,tmin,smooth = 0)
+        gs = LinRange(0,.005,40);
         sl = zeros(40,1);
-        t = LinRange(0,100,100000);
+        
+        maxtime = 10000;
+        timestep = 0.001;
+        nsteps = Int(maxtime/timestep);
+        npart = 20;
+        xinit = 0;
+        dx_init = 1;
+
+        t = LinRange(0,maxtime,nsteps);
         for i = 1:size(gs,1)
             print("Potential = $(pot), dT = $(tt), Tm = $(tmin), Gravity = $(gs[i])\n");
-            q,xs = manypart(200,0,10,0.001,100000,tt,gs[i],pot,tmin);
+            q,xs = manypart(npart,xinit,dx_init,timestep,nsteps,tmin,tt,gs[i],pot);
             sl[i],inter = linfit(t[100:end],q[100:end,2]);
+            npzwrite("./tempdata/pot$(pot)dt$(tt)tm$(tmin)grav$(i).npz",q);
         end
         return sl
     end
@@ -146,29 +186,16 @@ using PyPlot
 
     function runsim()
 
-    sl1_hot = zeros(40,6);
-    sl1_cold = zeros(40,6);
-    sl2_hot = zeros(40,6);
-    sl2_cold = zeros(40,6);
-    sl3_hot = zeros(40,6);
-    sl3_cold = zeros(40,6);
+    sl1_hot_smooth = zeros(40,4);
+#    sl1_cold_smooth = zeros(40,4);
+    tts = [0,2,4,6];
 
-    tts = [0,1,2,4,5,6];
-
-    for i = 1:6
-        sl1_hot[:,i] = getgrav(0,tts[i],1);
-        sl1_cold[:,i] = getgrav(0,tts[i],.1);
-        sl2_hot[:,i] = getgrav(1,tts[i],1);
-        sl2_cold[:,i] = getgrav(1,tts[i],.1);
-        sl3_hot[:,i] = getgrav(2,tts[i],1);
-        sl3_cold[:,i] = getgrav(2,tts[i],.1);
+    for i = 1:4
+        sl1_hot_smooth[:,i] = getgrav(0,tts[i],1);
+#        sl1_cold_smooth[:,i] = getgrav(0,tts[i],.1);
     end
-    npzwrite("./data/sl1_hot.npz",sl1_hot);
-    npzwrite("./data/sl1_cold.npz",sl1_cold);
-    npzwrite("./data/sl2_hot.npz",sl2_hot);
-    npzwrite("./data/sl2_cold.npz",sl2_cold);
-    npzwrite("./data/sl3_hot.npz",sl3_hot);
-    npzwrite("./data/sl3_cold.npz",sl3_cold);
+    npzwrite("./data/sl1_hot_smooth.npz",sl1_hot_smooth);
+#    npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
     end
 
     function plotres(pot,hot,tt)
