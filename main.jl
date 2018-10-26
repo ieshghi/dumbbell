@@ -130,7 +130,7 @@ using NPZ
         #             And Here              #
         #                                   #
 
-        g = 1;
+        g = .01;
         b = [sqrt(t1*dt/g),sqrt(t2*dt/g)]; #This gives the right answer...
         for i = 2:nsteps
             a = rhs(x[i-1,:],t[i-1],grav,pottype,g);
