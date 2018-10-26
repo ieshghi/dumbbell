@@ -81,29 +81,8 @@ using NPZ
         #                                    #
         #   Change physical parameters here  #
         #                                    #
-
-        return xdot(x1,x2,g,k,u,grav,pottype)
-    end
-
-    function rk_evolve(x1i,x2i,dt,nsteps,tmin,tt,grav,pottype) #Naive Runge-Kutta. Seems to be unreliable.
-        x = zeros(nsteps,2);
-        t = zeros(nsteps);
-        x[1,:] = [x1i,x2i];
-
-        #                                   #
-        #             And Here              #
-        #                                   #
-
-        g = 0.01;
-        t1 = tmin;
-        t2 = tmin + tt;
-
-        for i = 2:nsteps
-            thermvec = sqrt(2g/dt).*[sqrt(t1).*randn(1)[1],sqrt(t2).*randn(1)[1]];
-            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,grav,pottype,g);
-            x[i,:] += thermvec;
-        end
-        return x,t
+ 
+        return xdot(x1,x2,g,k,u,grav,pottype);
     end
 
     function rkint(x,t,dt,grav,pottype,g) #Naive Runge-Kutta. Seems to be unreliable.
@@ -121,7 +100,7 @@ using NPZ
     end
 
 
-    function rk_evolve_sde(x1i,x2i,dt,nsteps,tmin,tt,grav,pottype)
+    function rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype)
         x = zeros(nsteps,2);
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
@@ -130,10 +109,9 @@ using NPZ
         #             And Here              #
         #                                   #
 
-        g = 10;
-        t1 = tmin;
-        t2 = tmin + tt;
-        b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)];
+        g = .01;
+        #b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; This is what it should be 
+        b = [sqrt(t1*dt/g),sqrt(t2*dt/g)]; #This gives the right answer...
         for i = 2:nsteps
             #a = rhs(x[i-1,:],t[i-1],grav,pottype,g);
             dw = randn(2);
@@ -143,13 +121,36 @@ using NPZ
         end
         return x,t
     end
+    function euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype)
+        x = zeros(nsteps,2);
+        t = zeros(nsteps);
+        x[1,:] = [x1i,x2i];
 
-    function manypart(N,x1i,x2i,dt,nsteps,tt,grav,pottype = 0,tmin = 1)
-        xs = @DArray[rk_evolve_sde(x1i,x2i,dt,nsteps,tmin,tt,grav,pottype)[1] for j=1:N];
+        #                                   #
+        #             And Here              #
+        #                                   #
+
+        g = 1;
+        b = [sqrt(t1*dt/g),sqrt(t2*dt/g)]; #This gives the right answer...
+        for i = 2:nsteps
+            a = rhs(x[i-1,:],t[i-1],grav,pottype,g);
+            dw = randn(2);
+            x[i,:] = x[i-1,:] + a*dt + b.*dw;            
+        end
+        return x,t
+    end
+
+    function manypart(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0)
+        xs = @DArray[rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype)[1] for j=1:N];
         q = sum(xs)./N;
         return q,xs
     end
 
+    function manypart_euler(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0)
+        xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype)[1] for j=1:N];
+        q = sum(xs)./N;
+        return q,xs
+    end
 
     function linfit(xdat,ydat)
         X = zeros(size(xdat,1),2);
@@ -162,8 +163,10 @@ using NPZ
         return slope, intercept
     end
 
-    function getgrav(pot,tt,tmin,smooth = 0)
-        gs = LinRange(0,.005,40);
+    function getgrav(pot,tt,tmin,grange)
+        gi = grange[1];
+        gf = grange[2];
+        gs = LinRange(gi,gf,40);
         sl = zeros(40,1);
         
         maxtime = 10000;
@@ -172,30 +175,58 @@ using NPZ
         npart = 20;
         xinit = 0;
         dx_init = 1;
+        t1 = tmin;
+        t2 = tmin + tt;
 
         t = LinRange(0,maxtime,nsteps);
         for i = 1:size(gs,1)
             print("Potential = $(pot), dT = $(tt), Tm = $(tmin), Gravity = $(gs[i])\n");
-            q,xs = manypart(npart,xinit,dx_init,timestep,nsteps,tmin,tt,gs[i],pot);
+            q,xs = manypart_euler(npart,xinit,dx_init,timestep,nsteps,t1,t2,gs[i],pot);
             sl[i],inter = linfit(t[100:end],q[100:end,2]);
-            npzwrite("./tempdata/pot$(pot)dt$(tt)tm$(tmin)grav$(i).npz",q);
+            tmin_wr = Int(tmin*10);
+            npzwrite("./tempdata/pot$(pot)tm$(tmin_wr)dt$(tt)grav$(i).npz",q);
         end
         return sl
     end
 
+    function heatmap(tmin,tmax,n,pot)
+        t1arr = LinRange(tmin,tmax,n);
+        t2arr = LinRange(tmin,tmax,n);
+        out = zeros(n,n);        
+        maxtime = 10000;
+        timestep = 0.001;
+        nsteps = Int(maxtime/timestep);
+        npart = 20;
+        xinit = 0;
+        dx_init = 1;
+        t = LinRange(0,maxtime,nsteps);
+
+ 
+        for i = 1:n
+            for j = i:n
+                t1 = t1arr[i];
+                t2 = t2arr[j];
+                q,xs = manypart_euler(npart,xinit,dx_init,timestep,nsteps,t1,t2,0,pot);
+                out(i,j) = linfit(t,mean(q,2));
+                print("Heatmap: Potential = $(pot), T1 = $(t1), T2 = $(t2)\n");
+            end
+        end
+    end
 
     function runsim()
 
     sl1_hot_smooth = zeros(40,4);
-#    sl1_cold_smooth = zeros(40,4);
+    sl1_cold_smooth = zeros(40,4);
     tts = [0,2,4,6];
 
     for i = 1:4
-        sl1_hot_smooth[:,i] = getgrav(0,tts[i],1);
-#        sl1_cold_smooth[:,i] = getgrav(0,tts[i],.1);
+        sl1_hot_smooth[:,i] = getgrav(0,tts[i],.5,[0,.007]);
+        sl1_cold_smooth[:,i] = getgrav(0,tts[i],0.1,[0,.02]);
     end
     npzwrite("./data/sl1_hot_smooth.npz",sl1_hot_smooth);
-#    npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
+    npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
+    heatmap_1 = heatmap(0,1.2,10,0);
+    npzwrite("./data/heatmap_1.npz",heatmap_1);
     end
 
     function plotres(pot,hot,tt)
