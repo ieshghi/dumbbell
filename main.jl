@@ -109,7 +109,7 @@ using NPZ
         #             And Here              #
         #                                   #
 
-        g = .01;
+        g = .1;
         #b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; This is what it should be 
         b = [sqrt(t1*dt/g),sqrt(t2*dt/g)]; #This gives the right answer...
         for i = 2:nsteps
@@ -130,7 +130,7 @@ using NPZ
         #             And Here              #
         #                                   #
 
-        g = 1;
+        g = .1;
         b = [sqrt(t1*dt/g),sqrt(t2*dt/g)]; #This gives the right answer...
         for i = 2:nsteps
             a = rhs(x[i-1,:],t[i-1],grav,pottype,g);
@@ -166,8 +166,8 @@ using NPZ
     function getgrav(pot,tt,tmin,grange)
         gi = grange[1];
         gf = grange[2];
-        gs = LinRange(gi,gf,40);
-        sl = zeros(40,1);
+        gs = LinRange(gi,gf,60);
+        sl = zeros(60,1);
         
         maxtime = 10000;
         timestep = 0.001;
@@ -211,21 +211,22 @@ using NPZ
                 print("Heatmap: Potential = $(pot), T1 = $(t1), T2 = $(t2)\n");
             end
         end
+        return out
     end
 
     function runsim()
 
-    sl1_hot_smooth = zeros(40,4);
-    sl1_cold_smooth = zeros(40,4);
+    sl1_hot_smooth = zeros(60,4);
+    sl1_cold_smooth = zeros(60,4);
     tts = [0,2,4,6];
 
     for i = 1:4
-        sl1_hot_smooth[:,i] = getgrav(0,tts[i],.5,[0,.007]);
-        sl1_cold_smooth[:,i] = getgrav(0,tts[i],0.1,[0,.02]);
+        sl1_hot_smooth[:,i] = getgrav(0,tts[i],.5,[0,.015]);
+        sl1_cold_smooth[:,i] = getgrav(0,tts[i],0.1,[0,.2]);
     end
     npzwrite("./data/sl1_hot_smooth.npz",sl1_hot_smooth);
     npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
-    heatmap_1 = heatmap(0,1.2,10,0);
+    heatmap_1 = heatmap(0,1.,10,0);
     npzwrite("./data/heatmap_1.npz",heatmap_1);
     end
 
