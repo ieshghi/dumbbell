@@ -15,9 +15,9 @@ using NPZ
         if pottype == 0
             z = ((x%10+10)%10);
             if z<9
-                out = -u*z/9+1;
+                out = u*z/9;
             else
-                out = u*(z-10)+1;
+                out = -u*(z-10);
             end
         elseif pottype == 1
             out = (sin(pi*(x)/5)+sin(2*pi*(x)/5)/4+sin(3*pi*(x)/5)/9+sin(4*pi*(x)/5)/16+sin(5*pi*x/5)/25+1)/2;
@@ -111,7 +111,7 @@ using NPZ
 
         g = .1;
         #b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; This is what it should be 
-        b = [sqrt(t1*dt/g),sqrt(t2*dt/g)]; #This gives the right answer...
+        b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; #This gives the right answer...
         for i = 2:nsteps
             #a = rhs(x[i-1,:],t[i-1],grav,pottype,g);
             dw = randn(2);
@@ -131,7 +131,7 @@ using NPZ
         #                                   #
 
         g = .1;
-        b = [sqrt(t1*dt/g),sqrt(t2*dt/g)]; #This gives the right answer...
+        b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; #This gives the right answer...
         for i = 2:nsteps
             a = rhs(x[i-1,:],t[i-1],grav,pottype,g);
             dw = randn(2);
@@ -192,7 +192,8 @@ using NPZ
     function heatmap(tmin,tmax,n,pot)
         t1arr = LinRange(tmin,tmax,n);
         t2arr = LinRange(tmin,tmax,n);
-        out = zeros(n,n);        
+        out1 = zeros(n,n);        
+        out2 = zeros(n,n);        
         maxtime = 10000;
         timestep = 0.001;
         nsteps = Int(maxtime/timestep);
@@ -207,27 +208,29 @@ using NPZ
                 t1 = t1arr[i];
                 t2 = t2arr[j];
                 q,xs = manypart_euler(npart,xinit,dx_init,timestep,nsteps,t1,t2,0,pot);
-                out(i,j) = linfit(t,mean(q,2));
+                out1[i,j],inter = linfit(t,q[:,1]);
+                out2[i,j],inter = linfit(t,q[:,2]);
                 print("Heatmap: Potential = $(pot), T1 = $(t1), T2 = $(t2)\n");
             end
         end
-        return out
+        return out1,out2
     end
 
     function runsim()
 
-    sl1_hot_smooth = zeros(60,4);
-    sl1_cold_smooth = zeros(60,4);
-    tts = [0,2,4,6];
+    sl1_hot_smooth = zeros(80,4);
+#    sl1_cold_smooth = zeros(60,4);
+    tts = [0,1,2,3];
 
     for i = 1:4
-        sl1_hot_smooth[:,i] = getgrav(0,tts[i],.5,[0,.015]);
-        sl1_cold_smooth[:,i] = getgrav(0,tts[i],0.1,[0,.2]);
+        sl1_hot_smooth[:,i] = getgrav(0,tts[i],.25,[0,.025]);
+#        sl1_cold_smooth[:,i] = getgrav(0,tts[i],0.05,[0,.2]);
     end
     npzwrite("./data/sl1_hot_smooth.npz",sl1_hot_smooth);
-    npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
-    heatmap_1 = heatmap(0,1.,10,0);
-    npzwrite("./data/heatmap_1.npz",heatmap_1);
+#    npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
+#    heatmap_1,heatmap_2 = heatmap(0,2.,30,0);
+#    npzwrite("./data/heatmap_1_hot.npz",heatmap_1);
+#    npzwrite("./data/heatmap_2_hot.npz",heatmap_2);
     end
 
     function plotres(pot,hot,tt)
