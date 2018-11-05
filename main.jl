@@ -72,10 +72,11 @@ using NPZ
         return force./g;
     end
 
-    function rhs(x,t,grav,pottype,g)
+    function rhs(x,t,grav,pottype,g,t1,t2)
         x1 = x[1];
         x2 = x[2];
-        k = .01;
+        tr = (t1+t2)/2;
+        k = sqrt(2*tr/10); #make the spring such that if l is the period of the potential, then .5kl^2 = Tr
         u = 1.;
 
         #                                    #
@@ -85,13 +86,13 @@ using NPZ
         return xdot(x1,x2,g,k,u,grav,pottype);
     end
 
-    function rkint(x,t,dt,grav,pottype,g) #Naive Runge-Kutta. Seems to be unreliable.
+    function rkint(x,t,dt,grav,pottype,g) 
         h = dt;
         tm = t;
-        k1 = h.*rhs(x,tm,grav,pottype,g);
-        k2 = h.*rhs((x+k1*1/2),(tm+h*1/2),grav,pottype,g);
-        k3 = h.*rhs((x+k2*1/2),(tm+h*1/2),grav,pottype,g);
-        k4 = h.*rhs((x+k3),(tm+h),grav,pottype,g);
+        k1 = h.*rhs(x,tm,grav,pottype,g,t1,t2);
+        k2 = h.*rhs((x+k1*1/2),(tm+h*1/2),grav,pottype,g,t1,t2);
+        k3 = h.*rhs((x+k2*1/2),(tm+h*1/2),grav,pottype,g,t1,t2);
+        k4 = h.*rhs((x+k3),(tm+h),grav,pottype,g,t1,t2);
         x += 1/6*(k1 + 2*k2 + 2*k3 + k4);
         tm = tm+h;
         ynew = x;
@@ -110,13 +111,12 @@ using NPZ
         #                                   #
 
         g = .1;
-        #b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; This is what it should be 
-        b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; #This gives the right answer...
+        b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)];
         for i = 2:nsteps
-            #a = rhs(x[i-1,:],t[i-1],grav,pottype,g);
+            #a = rhs(x[i-1,:],t[i-1],grav,pottype,g,t1,t2);
             dw = randn(2);
             #x[i,:] = x[i-1,:] + a*dt + b.*dw;            
-            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,grav,pottype,g) ;
+            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,grav,pottype,g,t1,t2) ;
             x[i,:] += b.*dw;
         end
         return x,t
@@ -131,9 +131,9 @@ using NPZ
         #                                   #
 
         g = .1;
-        b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; #This gives the right answer...
+        b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; 
         for i = 2:nsteps
-            a = rhs(x[i-1,:],t[i-1],grav,pottype,g);
+            a = rhs(x[i-1,:],t[i-1],grav,pottype,g,t1,t2);
             dw = randn(2);
             x[i,:] = x[i-1,:] + a*dt + b.*dw;            
         end
@@ -183,7 +183,7 @@ using NPZ
             print("Potential = $(pot), dT = $(tt), Tm = $(tmin), Gravity = $(gs[i])\n");
             q,xs = manypart_euler(npart,xinit,dx_init,timestep,nsteps,t1,t2,gs[i],pot);
             sl[i],inter = linfit(t[100:end],q[100:end,2]);
-            tmin_wr = Int(tmin*10);
+            tmin_wr = Int(floor(tmin*100));
             npzwrite("./tempdata/pot$(pot)tm$(tmin_wr)dt$(tt)grav$(i).npz",q);
         end
         return sl
@@ -218,16 +218,16 @@ using NPZ
 
     function runsim()
 
-    sl1_hot_smooth = zeros(80,4);
-#    sl1_cold_smooth = zeros(60,4);
+    sl1_hot_smooth = zeros(60,4);
+    sl1_cold_smooth = zeros(60,4);
     tts = [0,1,2,3];
 
     for i = 1:4
         sl1_hot_smooth[:,i] = getgrav(0,tts[i],.25,[0,.025]);
-#        sl1_cold_smooth[:,i] = getgrav(0,tts[i],0.05,[0,.2]);
+        sl1_cold_smooth[:,i] = getgrav(0,tts[i],0.05,[0,2.]);
     end
     npzwrite("./data/sl1_hot_smooth.npz",sl1_hot_smooth);
-#    npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
+    npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
 #    heatmap_1,heatmap_2 = heatmap(0,2.,30,0);
 #    npzwrite("./data/heatmap_1_hot.npz",heatmap_1);
 #    npzwrite("./data/heatmap_2_hot.npz",heatmap_2);
