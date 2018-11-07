@@ -228,9 +228,9 @@ using NPZ
     end
     npzwrite("./data/sl1_hot_smooth.npz",sl1_hot_smooth);
     npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
-#    heatmap_1,heatmap_2 = heatmap(0,2.,30,0);
-#    npzwrite("./data/heatmap_1_hot.npz",heatmap_1);
-#    npzwrite("./data/heatmap_2_hot.npz",heatmap_2);
+    heatmap_1,heatmap_2 = heatmap(0,2.,30,0);
+    npzwrite("./data/heatmap_1_hot.npz",heatmap_1);
+    npzwrite("./data/heatmap_2_hot.npz",heatmap_2);
     end
 
     function plotres(pot,hot,tt)
