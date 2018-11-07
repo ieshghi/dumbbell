@@ -163,7 +163,7 @@ using NPZ
         return slope, intercept
     end
 
-    function getgrav(pot,tt,tmin,grange)
+    function getgrav(pot,tt,tmin,grange,whatpart=0)
         gi = grange[1];
         gf = grange[2];
         gs = LinRange(gi,gf,60);
@@ -181,10 +181,17 @@ using NPZ
         t = LinRange(0,maxtime,nsteps);
         for i = 1:size(gs,1)
             print("Potential = $(pot), dT = $(tt), Tm = $(tmin), Gravity = $(gs[i])\n");
-            q,xs = manypart_euler(npart,xinit,dx_init,timestep,nsteps,t1,t2,gs[i],pot);
+            if whatpart == 0
+                g = gs[i]
+            elseif whatpart == 1
+                g = gs[i].*[1,0]
+            elseif whatpart == 2
+                g = gs[i].*[0,1];
+            end
+            q,xs = manypart_euler(npart,xinit,dx_init,timestep,nsteps,t1,t2,g,pot);
             sl[i],inter = linfit(t[100:end],q[100:end,2]);
             tmin_wr = Int(floor(tmin*100));
-            npzwrite("./tempdata/pot$(pot)tm$(tmin_wr)dt$(tt)grav$(i).npz",q);
+            #npzwrite("./tempdata/pot$(pot)tm$(tmin_wr)dt$(tt)grav$(i).npz",q);
         end
         return sl
     end
@@ -217,58 +224,22 @@ using NPZ
     end
 
     function runsim()
+        sl1_hot_pullhot = zeros(60,4);
+        sl1_cold_pullhot = zeros(60,4);
+        sl1_hot_pullcold = zeros(60,4);
+        sl1_cold_pullcold = zeros(60,4);
+        tts = [0,1,2,3];
 
-    sl1_hot_smooth = zeros(60,4);
-    sl1_cold_smooth = zeros(60,4);
-    tts = [0,1,2,3];
-
-    for i = 1:4
-        sl1_hot_smooth[:,i] = getgrav(0,tts[i],.25,[0,.008]);
-        sl1_cold_smooth[:,i] = getgrav(0,tts[i],0.05,[0,.02]);
-    end
-    npzwrite("./data/sl1_hot_smooth.npz",sl1_hot_smooth);
-    npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
-    heatmap_1,heatmap_2 = heatmap(0,4.,40,0);
-    npzwrite("./data/heatmap_1_hot.npz",heatmap_1);
-    npzwrite("./data/heatmap_2_hot.npz",heatmap_2);
-    end
-
-    function plotres(pot,hot,tt)
-     if pot == 0
-         a = npzread("./data/sl1_hot.npz");
-         b = npzread("./data/sl1_cold.npz");
-     elseif pot == 1
-         a = npzread("./data/sl2_hot.npz");
-         b = npzread("./data/sl2_cold.npz");
-     elseif pot == 2
-         a = npzread("./data/sl3_hot.npz");
-         b = npzread("./data/sl3_cold.npz");
-     end
-     if hot == 1
-        data = a;
-     elseif hot == 0
-        data = b;
-     end
-
-     gs = LinRange(0,0.3,40);
-
-     if tt == 0
-         ind = 1;
-     elseif tt == 1
-         ind = 2;
-     elseif tt == 2
-         ind = 3;
-     elseif tt == 4
-         ind = 4;
-     elseif tt == 5
-         ind = 5;
-     elseif tt == 6
-         ind = 6;
-     end
-     plot(gs,data[:,ind],label="dT = %.2f"%(tt))
-     ylabel("Slope")
-     xlabel("Gravity")
-     
+        for i = 1:4
+            sl1_hot_pullhot[:,i] = getgrav(0,tts[i],.25,[0,.008],2);
+            sl1_cold_pullhot[:,i] = getgrav(0,tts[i],0.05,[0,.02],2);
+            sl1_hot_pullcold[:,i] = getgrav(0,tts[i],.25,[0,.008],1);
+            sl1_cold_pullcold[:,i] = getgrav(0,tts[i],0.05,[0,.02],1);
+        end
+        npzwrite("./data/sl1_hot_pullhot.npz",sl1_hot_pullhot);
+        npzwrite("./data/sl1_cold_pullhot.npz",sl1_cold_pullhot);
+        npzwrite("./data/sl1_hot_pullcold.npz",sl1_hot_pullcold);
+        npzwrite("./data/sl1_cold_pullcold.npz",sl1_cold_pullcold);
     end
 
 end
