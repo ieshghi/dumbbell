@@ -223,12 +223,12 @@ using NPZ
     tts = [0,1,2,3];
 
     for i = 1:4
-        sl1_hot_smooth[:,i] = getgrav(0,tts[i],.25,[0,.025]);
-        sl1_cold_smooth[:,i] = getgrav(0,tts[i],0.05,[0,2.]);
+        sl1_hot_smooth[:,i] = getgrav(0,tts[i],.25,[0,.008]);
+        sl1_cold_smooth[:,i] = getgrav(0,tts[i],0.05,[0,.02]);
     end
     npzwrite("./data/sl1_hot_smooth.npz",sl1_hot_smooth);
     npzwrite("./data/sl1_cold_smooth.npz",sl1_cold_smooth);
-    heatmap_1,heatmap_2 = heatmap(0,2.,30,0);
+    heatmap_1,heatmap_2 = heatmap(0,4.,40,0);
     npzwrite("./data/heatmap_1_hot.npz",heatmap_1);
     npzwrite("./data/heatmap_2_hot.npz",heatmap_2);
     end
