@@ -63,36 +63,40 @@ using NPZ
         return out
     end
 
-    function sprgpot(x1,x2,k) #potential gradient ON PARTICLE 1. For particle 2 take the negative of this
-        return k*(x1-x2);
+    function sprgpot(x1,x2,k,l=0) #potential gradient ON PARTICLE 1. For particle 2 take the negative of this
+        if l == 0 #l sets the maximum size of the spring, if it's 0 then the spring is infinitely flexible
+            return k*(x1-x2);
+        else        
+            return k*(x1-x2)/abs((1-((x1-x2)/l)^2));
+        end
     end
 
-    function xdot(x1,x2,g,k,u,grav,pottype)
-        force = [-sprgpot(x1,x2,k) - extgpot(x1,u,pottype) ,sprgpot(x1,x2,k)-extgpot(x2,u,pottype) ]-grav.*ones(2);
+    function xdot(x1,x2,g,k,u,grav,pottype,l=0)
+        force = [-sprgpot(x1,x2,k,l) - extgpot(x1,u,pottype) ,sprgpot(x1,x2,k,l)-extgpot(x2,u,pottype) ]-grav.*ones(2);
         return force./g;
     end
 
-    function rhs(x,t,grav,pottype,g,t1,t2)
+    function rhs(x,t,grav,pottype,g,t1,t2,l=0)
         x1 = x[1];
         x2 = x[2];
         tr = (t1+t2)/2;
-        k = sqrt(2*tr/10); #make the spring such that if l is the period of the potential, then .5kl^2 = Tr
+        k = tr/50; #make the spring such that if l (l=10) is the period of the potential, then .5kl^2 = Tr
         u = 1.;
 
         #                                    #
         #   Change physical parameters here  #
         #                                    #
  
-        return xdot(x1,x2,g,k,u,grav,pottype);
+        return xdot(x1,x2,g,k,u,grav,pottype,l);
     end
 
-    function rkint(x,t,dt,grav,pottype,g) 
+    function rkint(x,t,dt,grav,pottype,g,l=0) 
         h = dt;
         tm = t;
-        k1 = h.*rhs(x,tm,grav,pottype,g,t1,t2);
-        k2 = h.*rhs((x+k1*1/2),(tm+h*1/2),grav,pottype,g,t1,t2);
-        k3 = h.*rhs((x+k2*1/2),(tm+h*1/2),grav,pottype,g,t1,t2);
-        k4 = h.*rhs((x+k3),(tm+h),grav,pottype,g,t1,t2);
+        k1 = h.*rhs(x,tm,grav,pottype,g,t1,t2,l);
+        k2 = h.*rhs((x+k1*1/2),(tm+h*1/2),grav,pottype,g,t1,t2,l);
+        k3 = h.*rhs((x+k2*1/2),(tm+h*1/2),grav,pottype,g,t1,t2,l);
+        k4 = h.*rhs((x+k3),(tm+h),grav,pottype,g,t1,t2,l);
         x += 1/6*(k1 + 2*k2 + 2*k3 + k4);
         tm = tm+h;
         ynew = x;
@@ -101,7 +105,7 @@ using NPZ
     end
 
 
-    function rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype)
+    function rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l=0)
         x = zeros(nsteps,2);
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
@@ -113,15 +117,15 @@ using NPZ
         g = .1;
         b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)];
         for i = 2:nsteps
-            #a = rhs(x[i-1,:],t[i-1],grav,pottype,g,t1,t2);
+            #a = rhs(x[i-1,:],t[i-1],grav,pottype,g,t1,t2,l);
             dw = randn(2);
             #x[i,:] = x[i-1,:] + a*dt + b.*dw;            
-            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,grav,pottype,g,t1,t2) ;
+            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,grav,pottype,g,t1,t2,l) ;
             x[i,:] += b.*dw;
         end
         return x,t
     end
-    function euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype)
+    function euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l=0)
         x = zeros(nsteps,2);
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
@@ -133,23 +137,40 @@ using NPZ
         g = .1;
         b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; 
         for i = 2:nsteps
-            a = rhs(x[i-1,:],t[i-1],grav,pottype,g,t1,t2);
+            a = rhs(x[i-1,:],t[i-1],grav,pottype,g,t1,t2,l);
             dw = randn(2);
             x[i,:] = x[i-1,:] + a*dt + b.*dw;            
         end
         return x,t
     end
 
-    function manypart(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0)
-        xs = @DArray[rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype)[1] for j=1:N];
+    function manypart(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0)
+        xs = @DArray[rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l)[1] for j=1:N];
         q = sum(xs)./N;
         return q,xs
     end
 
-    function manypart_euler(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0)
-        xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype)[1] for j=1:N];
+    function manypart_euler(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0)
+        xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l)[1] for j=1:N];
         q = sum(xs)./N;
         return q,xs
+    end
+
+    function manypart_euler_dnv(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0) #decorrelated noise variables
+        xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l)[1] for j=1:N];
+        q = sum(xs)./N;
+        alpha = t2/(t1+t2);
+        beta = t1/(t1+t2);
+        
+        xa = q[:,1];
+        xb = q[:,2];
+
+        r = xa-xb;
+        R = alpha*xa+beta*xb;
+
+        q_out = hcat(r,R);
+
+        return q_out,xs
     end
 
     function linfit(xdat,ydat)
