@@ -1,14 +1,126 @@
 module solvefp
 contains
+
+
     
+    subroutine update_ghosts(ax,p,hx)
+        implicit none
+        real *8::ax(:,:),p(:,:),hx,hy,b(2,2)
+        real *8,allocatable:: p_ng(:,:),pout(:,:)
+        integer::nx,ny,i,j
+
+        b = barray()
+
+        nx = size(p(:,1))-2
+        ny = size(p(1,:))-2
+        
+        allocate(p_ng(nx,ny),pout(nx+2,ny+2))
+        p_ng = p(2:nx+1,2:ny+1)
+
+        do i = 1,nx
+            p(i+1,ny+2) = p(i,2)
+            p(i+1,1) = p(i,ny+1)
+        enddo
+        do i = 1,ny
+            p(nx+2,i+1) = -2*hx/(b(1,2)+b(1,1))*ax(nx,i)*p_ng(nx,i)+p_ng(nx-1,i)
+            p(1,i+1) = 2*hx/(b(1,2)+b(1,1))*ax(1,i)*p_ng(1,i)+p_ng(2,i)
+        enddo
+
+        p(1,1) = 0
+        p(nx+2,1) = 0
+        p(1,ny+2) = 0
+        p(nx+2,ny+2) = 0
+
+    endsubroutine update_ghosts
+
+    function der_2arr(n)
+        implicit none
+        integer::n,i
+        real *8::der_2arr(n,n)
+
+        der_2arr(:,:) = 0
+        
+        der_2arr(1,1) = 2
+        der_2arr(1,2) = -5
+        der_2arr(1,3) = 4
+        der_2arr(1,4) = 1
+
+        do i = 2,n-1
+            der_2arr(i,i-1) = 1
+            der_2arr(i,i) = -2
+            der_2arr(i,i+1) = 1
+        enddo
+        
+        der_2arr(n,n) = 2
+        der_2arr(n,n-1) = -5
+        der_2arr(n,n-2) = 4
+        der_2arr(n,n-3) = 1
+    endfunction der_2arr
+
+    function der_arr(n)
+        implicit none
+        integer::n,i
+        real *8::der_arr(n,n)
+        der_arr(:,:) = 0
+        der_arr(1,1) = -3/2
+        der_arr(1,2) = 2
+        der_arr(1,3) = -1/2
+
+        do i = 2,n-1
+            
+            der_arr(i,i+1) = 1/2
+            der_arr(i,i-1) = -1/2
+
+        enddo
+
+        der_arr(n,n-2) = 1/2
+        der_arr(n,n-1) = -2
+        der_arr(n,n) = 3/2
+    endfunction der_arr
+
+
+    subroutine gengrid(nx,ny,grid,hx,hy)
+       implicit none
+       integer::nx,ny
+       real *8::xmax,ymax,hx,hy,k,tbar,xspr,grid(nx+2,ny+2)
+       
+       ymax = consts(1)+consts(2)
+       k = consts(3)
+       tbar = consts(5)
+
+       xspr = sqrt(2*tbar/k)
+       xmax = 2*consts(8)*xspr
+       
+       hy = ymax/ny
+       hx = xmax/nx
+       grid(:,:) = 0
+
+    endsubroutine gengrid
     
+    function consts(m)
+       implicit none
+       integer::m
+       real *8::consts,lsmall,lbig,k,tau,tbar,gm,umax,kmult,vals(8)
+
+       lsmall = 1
+       lbig = 9
+       k=1
+       tau = 0
+       tbar = 1
+       umax = 1
+       gm = 1
+       kmult = 5
+       vals = (/lsmall,lbig,k,tau,tbar,umax,gm,kmult/)
+       consts = vals(m)
+
+    endfunction consts 
 
     function uprime(z)
         implicit none
         real *8::z,lsmall,lbig,l,umax,uprime
-        lsmall = 1
-        lbig = 9
-        umax = 1
+        lsmall = consts(1)
+        lbig = consts(2)
+        umax = consts(6)
 
         l = lsmall + lbig
         if mod(z,l)<lsmall then
@@ -18,9 +130,12 @@ contains
         endif
     endfunction uprime
 
-    function avec(x,y,k,gm)
+    function avec(x,y)
       implicit none
       real *8:: x,y,k,up,um,gm,fx,fy,avec(2)
+      k = consts(3)
+      gm = consts(7)
+
       um = uprime(y-x/2)
       up = uprime(y+x/2)
       fx = -k*x-0.5*(up-um)
@@ -29,9 +144,14 @@ contains
       avec(2) = fy/(2*gm)
     endfunction avec
 
-    function barray(tau,tbar,gm)
+    function barray()
       implicit none
       real *8::tau,tbar,gm,barray(2,2)
+
+      tau = consts(4)
+      tbar = consts(5)
+      gm = consts(7)
+
       barray(1,1) = 4
       barray(1,2) = tau
       barray(2,1) = tau
@@ -99,14 +219,5 @@ contains
         deriv(i) = real(output2(i))
       end do
     end subroutine specder
-      
-
-
-
-
-
-
-
-
 
 endmodule solvefp
