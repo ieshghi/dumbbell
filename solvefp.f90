@@ -3,16 +3,19 @@ contains
 
     subroutine fullrelax(p,nx,ny)
         implicit none
+        integer::nx,ny
         real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny)
         
-        call gengrid(nx,ny,xvals,yvals,hx,hy)
+        call gengrid(nx,ny,hx,hy,xvals,yvals)
         eps = 1e-12
         error = 10
 
-        while(error>eps)do
+        error = sqrt(sum(p**2))
+        do while(error>eps)
+            write(*,*) 'error = ',error
             p2 = p
-            relaxstep(p,xvals,yvals)
-            error = max(abs(p))
+            call relaxstep(p,xvals,yvals)
+            error = sqrt(sum(p**2))
         enddo
 
         p = p2        
@@ -36,9 +39,9 @@ contains
             enddo
         enddo
 
+        call update_ghosts(ax,p2,hx)
         p2 = term1(p,xvals,yvals)+term2(p,xvals,yvals)+term3(p,xvals,yvals)
         
-        call update_ghosts(ax,p2,hx)
         p = p2
     endsubroutine relaxstep
 
@@ -180,12 +183,12 @@ contains
 
        lsmall = 1
        lbig = 9
-       k=1
-       tau = 0
+       k=10
+       tau = 0.1
        tbar = 1
        umax = 1
        gm = 1
-       kmult = 5
+       kmult = 10
        vals = (/lsmall,lbig,k,tau,tbar,umax,gm,kmult/)
        consts = vals(m)
 
@@ -215,7 +218,7 @@ contains
         umax = consts(6)
 
         l = lsmall + lbig
-        if mod(z,l)<lsmall then
+        if (mod(z,l)<lsmall) then
             uprime = umax/lsmall
         else
             uprime = -umax/lbig
@@ -252,6 +255,31 @@ contains
 
     endfunction barray
 
+    function potential(x,y)
+        implicit none
+        real *8::potential,x,y,umax,lsmall,lbig,zp,zm,l,k
+        potential = 0
+        lsmall = consts(1)
+        lbig = consts(2)
+        l = lsmall+lbig
+        umax = consts(6)
+        k = consts(3)
+
+        zp = mod(y+x/2,l)
+        zm = mod(y-x/2,l)
+
+        if (zp<lsmall) then
+            potential = potential + umax*zp/lsmall
+        else
+            potential = potential - umax*(zp-l)/lbig
+        endif
+        if (zm<lsmall) then
+            potential = potential + umax*zm/lsmall
+        else
+            potential = potential - umax*(zm-l)/lbig
+        endif
+        potential = potential + k*x*x/2
+    endfunction potential
     function comp2der(arr,n)!second order finite difference first derivative,
       !assumes ghost cells and doesn't touch them
       implicit none
@@ -261,7 +289,7 @@ contains
       comp2der(n) = arr(n)
 
       do i = 2,n-1
-        compder(i) = (arr(i+1)-2*arr(i)+arr(i-1)
+        comp2der(i) = (arr(i+1)-2*arr(i)+arr(i-1))
       enddo
 
     endfunction comp2der
