@@ -1,7 +1,126 @@
 module solvefp
 contains
 
+    subroutine fullrelax(p,nx,ny)
+        implicit none
+        real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny)
+        
+        call gengrid(nx,ny,xvals,yvals,hx,hy)
+        eps = 1e-12
+        error = 10
 
+        while(error>eps)do
+            p2 = p
+            relaxstep(p,xvals,yvals)
+            error = max(abs(p))
+        enddo
+
+        p = p2        
+    endsubroutine
+
+    subroutine relaxstep(p,xvals,yvals)
+        implicit none
+        real *8::p(:,:),xvals(:),yvals(:),hx,temp(2)
+        real *8,allocatable::p2(:,:),ax(:,:)
+        integer::nx,ny,i,j
+
+        nx = size(p(:,1))-2
+        ny = size(p(1,:))-2
+        hx = xvals(2)-xvals(1)
+        allocate(p2(nx+2,ny+2),ax(nx,ny))
+        
+        do i = 1,nx
+            do j = 1,ny
+                temp = avec(xvals(i),yvals(j))
+                ax(i,j) = temp(1)
+            enddo
+        enddo
+
+        p2 = term1(p,xvals,yvals)+term2(p,xvals,yvals)+term3(p,xvals,yvals)
+        
+        call update_ghosts(ax,p2,hx)
+        p = p2
+    endsubroutine relaxstep
+
+    function term3(p,xvals,yvals)
+        implicit none
+        real *8::p(:,:),xvals(:),yvals(:),b(2,2),hx,hy
+        integer::nx,ny,i,j
+        real *8,allocatable::term3(:,:),px(:,:),py(:,:),pxx(:,:),pyy(:,:),pxy(:,:)
+
+        nx = size(p(:,1))-2
+        ny = size(p(1,:))-2
+        hx = xvals(2)-xvals(1)
+        hy = yvals(2)-yvals(1)
+        allocate(term3(nx+2,ny+2),px(nx+2,ny+2),py(nx+2,ny+2),pyy(nx+2,ny+2),pxx(nx+2,ny+2),pxy(nx+2,ny+2))
+        term3(:,:) = 0
+        b = barray()
+        do i = 1,nx
+            pyy(i+1,:) = comp2der(p(i+1,:),ny)/(hy*hy)
+        enddo
+        do i = 1,ny
+            pxx(:,i+1) = comp2der(p(:,i+1),nx)/(hx*hx)
+        enddo
+        do i = 1,nx
+            py(i+1,:) = compder(p(i+1,:),ny)/hy
+        enddo
+        do i = 1,ny
+            pxy(:,i+1) = compder(py(:,i+1),nx)/hx
+        enddo
+
+        term3 = b(1,1)*pxx+b(2,2)*pyy+2*b(1,2)*pxy
+    endfunction term3
+
+    function term2(p,xvals,yvals)!term 2 looks like a . grad(p)
+        implicit none
+        real *8::p(:,:),xvals(:),yvals(:),temp(2),hx,hy
+        integer::nx,ny,i,j
+        real *8,allocatable::term2(:,:),ax(:,:),ay(:,:),px(:,:),py(:,:)
+
+        nx = size(p(:,1))-2
+        ny = size(p(1,:))-2
+        hx = xvals(2)-xvals(1)
+        hy = yvals(2)-yvals(1)
+
+        allocate(term2(nx+2,ny+2),ax(nx,ny),ay(nx,ny),px(nx+2,ny+2),py(nx+2,ny+2))
+        term2(:,:) = 0
+
+        do i=1,nx
+            do j=1,ny
+                temp = avec(xvals(i),yvals(j))
+                ax(i,j) = temp(1)
+                ay(i,j) = temp(2)
+            enddo
+        enddo
+        
+        do i = 1,nx
+            py(i+1,:) = compder(p(i+1,:),ny)/hy
+        enddo
+        do i = 1,ny
+            px(:,i+1) = compder(p(:,i+1),nx)/hx
+        enddo
+        term2(2:nx+1,2:ny+1) = ax*px(2:nx+1,2:ny+1)+ay*py(2:nx+1,2:ny+1)
+    endfunction term2
+
+    function term1(p,xvals,yvals)!term 1 looks like div(a)
+        implicit none
+        real *8::p(:,:),xvals(:),yvals(:)
+        integer::nx,ny,i,j
+        real *8,allocatable::term1(:,:)
+
+        nx = size(p(:,1))-2
+        ny = size(p(1,:))-2
+    
+        allocate(term1(nx+2,ny+2))
+
+        term1(:,:) = 0
+
+        do i = 1,nx
+            do j = 1,ny
+                term1(i+1,j+1) = p(i+1,j+1)*diva(xvals(i),yvals(j))
+            enddo
+        enddo
+    endfunction term1
     
     subroutine update_ghosts(ax,p,hx)
         implicit none
@@ -33,56 +152,10 @@ contains
 
     endsubroutine update_ghosts
 
-    function der_2arr(n)
-        implicit none
-        integer::n,i
-        real *8::der_2arr(n,n)
-
-        der_2arr(:,:) = 0
-        
-        der_2arr(1,1) = 2
-        der_2arr(1,2) = -5
-        der_2arr(1,3) = 4
-        der_2arr(1,4) = 1
-
-        do i = 2,n-1
-            der_2arr(i,i-1) = 1
-            der_2arr(i,i) = -2
-            der_2arr(i,i+1) = 1
-        enddo
-        
-        der_2arr(n,n) = 2
-        der_2arr(n,n-1) = -5
-        der_2arr(n,n-2) = 4
-        der_2arr(n,n-3) = 1
-    endfunction der_2arr
-
-    function der_arr(n)
-        implicit none
-        integer::n,i
-        real *8::der_arr(n,n)
-        der_arr(:,:) = 0
-        der_arr(1,1) = -3/2
-        der_arr(1,2) = 2
-        der_arr(1,3) = -1/2
-
-        do i = 2,n-1
-            
-            der_arr(i,i+1) = 1/2
-            der_arr(i,i-1) = -1/2
-
-        enddo
-
-        der_arr(n,n-2) = 1/2
-        der_arr(n,n-1) = -2
-        der_arr(n,n) = 3/2
-    endfunction der_arr
-
-
-    subroutine gengrid(nx,ny,grid,hx,hy)
+    subroutine gengrid(nx,ny,hx,hy,xvals,yvals)
        implicit none
        integer::nx,ny
-       real *8::xmax,ymax,hx,hy,k,tbar,xspr,grid(nx+2,ny+2)
+       real *8::xmax,ymax,hx,hy,k,tbar,xspr,xvals(nx),yvals(ny)
        
        ymax = consts(1)+consts(2)
        k = consts(3)
@@ -93,7 +166,10 @@ contains
        
        hy = ymax/ny
        hx = xmax/nx
-       grid(:,:) = 0
+
+       xvals = linspace(-1.0d0,1.0d0,nx)
+       yvals = linspace2(0.0d0,ymax,ny) !y is a periodic coordinate so we don't
+       !include the endpoint
 
     endsubroutine gengrid
     
@@ -114,6 +190,22 @@ contains
        consts = vals(m)
 
     endfunction consts 
+
+    function diva(x,y)
+        implicit none
+        real *8::x,y,k,diva
+        k = consts(3)
+        diva = -k-5.0d0/4*(upp(y+x/2)+upp(y-x/2))
+
+    endfunction diva
+
+    function upp(z)
+        implicit none
+        real *8::z,upp
+        
+        upp = 0
+
+    endfunction upp
 
     function uprime(z)
         implicit none
@@ -160,64 +252,56 @@ contains
 
     endfunction barray
 
-    function compder(arr,n,lmax)
-      !Fourth order convergence tested. Error starts blowing up @ n~1000
+    function comp2der(arr,n)!second order finite difference first derivative,
+      !assumes ghost cells and doesn't touch them
       implicit none
-      real *8::dy
-      complex *16::arr(n)
-      complex *16::compder(n)
+      real *8::dy,arr(n),comp2der(n)
       integer::n,i
-        
-      dy = lmax/n
-        
-      compder(1) = -25.0d0/12*arr(1) + 4*arr(2) - 3*arr(3) + 4.0d0/3*arr(4) - 1.0d0/4*arr(5)
-      compder(2) = -25.0d0/12*arr(2) + 4*arr(3) - 3*arr(4) + 4.0d0/3*arr(5) - 1.0d0/4* arr(6)
-      compder(n) = +25.0d0/12*arr(n) - 4*arr(n-1) + 3*arr(n-2) - 4.0d0/3*arr(n-3) + 1.0d0/4*arr(n-4)
-      compder(n-1) = +25.0d0/12*arr(n-1) - 4*arr(n-2) + 3*arr(n-3) - 4.0d0/3*arr(n-4) + 1.0d0/4* arr(n-5)
-      do i = 3,n-2
-        compder(i) = 1.0d0/12*arr(i-2) - 2.0d0/3*arr(i-1) + 2.0d0/3*arr(i+1) - 1.0d0/12*arr(i+2)
+      comp2der(1) = arr(1)
+      comp2der(n) = arr(n)
+
+      do i = 2,n-1
+        compder(i) = (arr(i+1)-2*arr(i)+arr(i-1)
       enddo
 
-      compder = compder/dy
+    endfunction comp2der
+
+    function compder(arr,n) !second order finite difference first derivative,
+      !assumes ghost cells and doesn't touch them
+      implicit none
+      real *8::dy,arr(n),compder(n)
+      integer::n,i
+        
+      compder(1) = arr(1) 
+      compder(n) = arr(n)
+      do i = 2,n-1
+        compder(i) = (arr(i+1)-arr(i-1))/2
+      enddo
+
     endfunction compder
   
-    subroutine specder(xmin,xmax,n,input,deriv)  !takes spectral derivatives of order n of a function evaluated at n points.
-      use, intrinsic :: iso_c_binding
-      implicit none
-      include '/usr/local/include/fftw3.f03'
-      type(c_ptr) :: plan
-      integer :: n,i
-      integer *8::plan_forward,plan_backward
-      complex(c_double_complex), dimension(n) :: input,output,input2,output2
-      real *8,dimension(n)::x,k,der,deriv
-      real *8::xmin,xmax,dx,pi
-      pi = 4.0d0*atan(1.0d0)
+    function  linspace(a,b,n) !equivalent of python linspace, includes endpoint
+        implicit none
+        real *8, intent(in):: a,b !start and endpoint
+        integer, intent(in):: n !number of elements
+        integer:: i ! loop variable
+        real *8:: dx, linspace(n)
+        dx = (b-a)/(n-1) !spacing between x's
+        do i = 1,n
+            linspace(i)=a+(i-1)*dx ! fill the output array
+        end do
+    endfunction linspace
 
-      call dfftw_plan_dft_1d_(plan_forward,n, input,output,fftw_forward,fftw_estimate)
-      call dfftw_execute_(plan_forward)
-      call dfftw_destroy_plan_(plan_forward)
-
-      do i = 1,n/2
-      k(i) = i-1.0d0
-      end do
-
-      k(n/2+1) = 0.0d0
-
-      do i = n/2+2,n
-      k(i) = (-1.0d0)*n+i-1.0d0
-      end do
-
-      do i=1,n
-        input2(i) =2.0d0*pi/(xmax-xmin)*k(i)*cmplx(0.0D0,1.0D0,kind=16)*output(i)/n
-      end do
-
-      call dfftw_plan_dft_1d_(plan_backward,n, input2, output2,fftw_backward,fftw_estimate)
-      call dfftw_execute_(plan_backward, input2, output2)
-      call dfftw_destroy_plan_(plan_backward)
-
-      do i = 1,n
-        deriv(i) = real(output2(i))
-      end do
-    end subroutine specder
+    function  linspace2(a,b,n) !equivalent of python linspace, except it doesn't include the endpoint
+        implicit none
+        real *8, intent(in):: a,b !start and endpoint
+        integer, intent(in):: n !number of elements
+        integer:: i ! loop variable
+        real *8:: dx, linspace2(n)
+        dx = (b-a)/(n) !spacing between x's
+        do i = 1,n
+            linspace2(i)=a+(i-1)*dx ! fill the output array
+        end do
+    endfunction linspace2
 
 endmodule solvefp

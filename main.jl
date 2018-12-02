@@ -230,7 +230,6 @@ using NPZ
         dx_init = 1;
         t = LinRange(0,maxtime,nsteps);
 
- 
         for i = 1:n
             for j = i:n
                 t1 = t1arr[i];
