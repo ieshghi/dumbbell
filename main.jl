@@ -76,11 +76,12 @@ using NPZ
         return force./g;
     end
 
-    function rhs(x,t,grav,pottype,g,t1,t2,l=0)
+    function rhs(x,t,grav,pottype,g,t1,t2,l=0,k=1)
         x1 = x[1];
         x2 = x[2];
         tr = (t1+t2)/2;
-        k = tr/50; #make the spring such that if l (l=10) is the period of the potential, then .5kl^2 = Tr
+        k = k*tr/50; #make the spring such that if l (l=10) is the period of the potential, then .5kl^2 = Tr
+        
         u = 1.;
 
         #                                    #
@@ -90,13 +91,13 @@ using NPZ
         return xdot(x1,x2,g,k,u,grav,pottype,l);
     end
 
-    function rkint(x,t,dt,grav,pottype,g,l=0) 
+    function rkint(x,t,dt,grav,pottype,g,l=0,k=1) 
         h = dt;
         tm = t;
-        k1 = h.*rhs(x,tm,grav,pottype,g,t1,t2,l);
-        k2 = h.*rhs((x+k1*1/2),(tm+h*1/2),grav,pottype,g,t1,t2,l);
-        k3 = h.*rhs((x+k2*1/2),(tm+h*1/2),grav,pottype,g,t1,t2,l);
-        k4 = h.*rhs((x+k3),(tm+h),grav,pottype,g,t1,t2,l);
+        k1 = h.*rhs(x,tm,grav,pottype,g,t1,t2,l,k);
+        k2 = h.*rhs((x+k1*1/2),(tm+h*1/2),grav,pottype,g,t1,t2,l,k);
+        k3 = h.*rhs((x+k2*1/2),(tm+h*1/2),grav,pottype,g,t1,t2,l,k);
+        k4 = h.*rhs((x+k3),(tm+h),grav,pottype,g,t1,t2,l,k);
         x += 1/6*(k1 + 2*k2 + 2*k3 + k4);
         tm = tm+h;
         ynew = x;
@@ -105,7 +106,7 @@ using NPZ
     end
 
 
-    function rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l=0)
+    function rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l=0,k=1)
         x = zeros(nsteps,2);
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
@@ -117,15 +118,13 @@ using NPZ
         g = .1;
         b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)];
         for i = 2:nsteps
-            #a = rhs(x[i-1,:],t[i-1],grav,pottype,g,t1,t2,l);
             dw = randn(2);
-            #x[i,:] = x[i-1,:] + a*dt + b.*dw;            
-            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,grav,pottype,g,t1,t2,l) ;
+            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,grav,pottype,g,t1,t2,l,k) ;
             x[i,:] += b.*dw;
         end
         return x,t
     end
-    function euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l=0)
+    function euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l=0,k=1)
         x = zeros(nsteps,2);
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
@@ -137,26 +136,26 @@ using NPZ
         g = .1;
         b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)]; 
         for i = 2:nsteps
-            a = rhs(x[i-1,:],t[i-1],grav,pottype,g,t1,t2,l);
+            a = rhs(x[i-1,:],t[i-1],grav,pottype,g,t1,t2,l,k);
             dw = randn(2);
             x[i,:] = x[i-1,:] + a*dt + b.*dw;            
         end
         return x,t
     end
 
-    function manypart(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0)
+    function manypart(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0,k=1)
         xs = @DArray[rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l)[1] for j=1:N];
         q = sum(xs)./N;
         return q,xs
     end
 
-    function manypart_euler(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0)
+    function manypart_euler(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0,k=1)
         xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l)[1] for j=1:N];
         q = sum(xs)./N;
         return q,xs
     end
 
-    function manypart_euler_dnv(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0) #decorrelated noise variables
+    function manypart_euler_dnv(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0,k=1) #decorrelated noise variables
         xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l)[1] for j=1:N];
         q = sum(xs)./N;
         alpha = t2/(t1+t2);
@@ -182,6 +181,35 @@ using NPZ
         intercept = coeff_pred[2];
 
         return slope, intercept
+    end
+
+    function gettscale(tmin)
+#        dts = LinRange(0,1,100);
+        dts = 0.5;
+        sl = zeros(100,1);
+        t1 = tmin;
+        t2 = tmin + dts;
+        tim = LinRange(0,10000000*0.001,10000000);
+        for i = 1:size(dts,1);
+            print("T1 = $(t1), T2 = $(t2[i]), finding drift.\n");
+            q,xs = manypart_euler(20,0,1,.001,10000000,t1,t2[i],0,0);
+            sl[i],inter = linfit(tim[100:end],q[100:end,2]);
+        end
+        return sl
+    end
+
+    function getk(kvals)
+        sl = zeros(size(kvals));
+        t1 = .5;
+        t2 = 1;
+        tim = LinRange(0,10000000*0.001,10000000);
+        for i = 1:size(kvals,1);
+            print("T1 = $(t1), T2 = $(t2), k = $(kvals[i]).\n");
+            q,xs = manypart_euler(20,0,1,.001,10000000,t1,t2,0,0,0,kvals[i]);
+            sl[i],inter = linfit(tim[100:end],q[100:end,2]);
+        end
+        return sl
+
     end
 
     function getgrav(pot,tt,tmin,grange,whatpart=0)
@@ -244,22 +272,13 @@ using NPZ
     end
 
     function runsim()
-        sl1_hot_pullhot = zeros(60,4);
-        sl1_cold_pullhot = zeros(60,4);
-        sl1_hot_pullcold = zeros(60,4);
-        sl1_cold_pullcold = zeros(60,4);
-        tts = [0,1,2,3];
-
-        for i = 1:4
-            sl1_hot_pullhot[:,i] = getgrav(0,tts[i],.25,[0,.008],2);
-            sl1_cold_pullhot[:,i] = getgrav(0,tts[i],0.05,[0,.02],2);
-            sl1_hot_pullcold[:,i] = getgrav(0,tts[i],.25,[0,.008],1);
-            sl1_cold_pullcold[:,i] = getgrav(0,tts[i],0.05,[0,.02],1);
-        end
-        npzwrite("./data/sl1_hot_pullhot.npz",sl1_hot_pullhot);
-        npzwrite("./data/sl1_cold_pullhot.npz",sl1_cold_pullhot);
-        npzwrite("./data/sl1_hot_pullcold.npz",sl1_hot_pullcold);
-        npzwrite("./data/sl1_cold_pullcold.npz",sl1_cold_pullcold);
+        sl_temprun_tm = gettscale(LinRange(0.1,1.5,100));
+        sl_stiffspr = getk(LinRange(1,100,100));
+        sl_softspr = getk(LinRange(.01,1,100));
+        
+        npzwrite("./data/sl_temprun_tm.npz",sl_temprun_tm);
+        npzwrite("./data/sl_stiffspr.npz",sl_stiffspr);
+        npzwrite("./data/sl_softspr.npz",sl_softspr);
     end
 
 end
