@@ -5,14 +5,15 @@ integer::nx,ny,i,j
 real *8,allocatable::p(:,:),xvals(:),yvals(:)
 real *8::hx,hy
 
-nx = 10000
-ny = 100
+nx = 1000
+ny = 1000
 allocate(p(nx+2,ny+2),xvals(nx),yvals(ny))
 call gengrid(nx,ny,hx,hy,xvals,yvals)
+p(:,:) = 0
 
-do i = 1,nx
-do j = 1,ny
-    p(i,j) = exp(-potential(xvals(i),yvals(j))/consts(5))
+do i = 3,nx-2
+do j = 3,ny-2
+    p(i,j) = 0.01
 enddo
 enddo
 

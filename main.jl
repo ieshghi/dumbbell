@@ -71,12 +71,12 @@ using NPZ
         end
     end
 
-    function xdot(x1,x2,g,k,u,grav,pottype,l=0)
+    function xdot(x1,x2,g,k,u,grav,pottype,l)
         force = [-sprgpot(x1,x2,k,l) - extgpot(x1,u,pottype) ,sprgpot(x1,x2,k,l)-extgpot(x2,u,pottype) ]-grav.*ones(2);
         return force./g;
     end
 
-    function rhs(x,t,grav,pottype,g,t1,t2,l=0,k=1)
+    function rhs(x,t,grav,pottype,g,t1,t2,l,k)
         x1 = x[1];
         x2 = x[2];
         tr = (t1+t2)/2;
@@ -91,7 +91,7 @@ using NPZ
         return xdot(x1,x2,g,k,u,grav,pottype,l);
     end
 
-    function rkint(x,t,dt,grav,pottype,g,l=0,k=1) 
+    function rkint(x,t,dt,grav,pottype,g,l,k) 
         h = dt;
         tm = t;
         k1 = h.*rhs(x,tm,grav,pottype,g,t1,t2,l,k);
@@ -106,7 +106,7 @@ using NPZ
     end
 
 
-    function rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l=0,k=1)
+    function rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l,k)
         x = zeros(nsteps,2);
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
@@ -124,7 +124,7 @@ using NPZ
         end
         return x,t
     end
-    function euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l=0,k=1)
+    function euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l,k)
         x = zeros(nsteps,2);
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
@@ -144,19 +144,19 @@ using NPZ
     end
 
     function manypart(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0,k=1)
-        xs = @DArray[rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l)[1] for j=1:N];
+        xs = @DArray[rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l,k)[1] for j=1:N];
         q = sum(xs)./N;
         return q,xs
     end
 
     function manypart_euler(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0,k=1)
-        xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l)[1] for j=1:N];
+        xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l,k)[1] for j=1:N];
         q = sum(xs)./N;
         return q,xs
     end
 
     function manypart_euler_dnv(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0,k=1) #decorrelated noise variables
-        xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l)[1] for j=1:N];
+        xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l,k)[1] for j=1:N];
         q = sum(xs)./N;
         alpha = t2/(t1+t2);
         beta = t1/(t1+t2);
@@ -185,14 +185,14 @@ using NPZ
 
     function gettscale(tmin)
 #        dts = LinRange(0,1,100);
-        dts = 0.5;
+        dts = 1.;
         sl = zeros(100,1);
         t1 = tmin;
         t2 = tmin + dts;
         tim = LinRange(0,10000000*0.001,10000000);
-        for i = 1:size(dts,1);
+        for i = 1:size(t2,1);
             print("T1 = $(t1), T2 = $(t2[i]), finding drift.\n");
-            q,xs = manypart_euler(20,0,1,.001,10000000,t1,t2[i],0,0);
+            q,xs = manypart_euler(20,0,1,.001,10000000,t1[i],t2[i],0,0);
             sl[i],inter = linfit(tim[100:end],q[100:end,2]);
         end
         return sl
@@ -200,12 +200,12 @@ using NPZ
 
     function getk(kvals)
         sl = zeros(size(kvals));
-        t1 = .5;
-        t2 = 1;
+        t1 = .05;
+        t2 = .9;
         tim = LinRange(0,10000000*0.001,10000000);
         for i = 1:size(kvals,1);
             print("T1 = $(t1), T2 = $(t2), k = $(kvals[i]).\n");
-            q,xs = manypart_euler(20,0,1,.001,10000000,t1,t2,0,0,0,kvals[i]);
+            q,xs = manypart_euler(50,0,1,.001,10000000,t1,t2,0,0,0,kvals[i]);
             sl[i],inter = linfit(tim[100:end],q[100:end,2]);
         end
         return sl
@@ -272,11 +272,9 @@ using NPZ
     end
 
     function runsim()
-        sl_temprun_tm = gettscale(LinRange(0.1,1.5,100));
-        sl_stiffspr = getk(LinRange(1,100,100));
-        sl_softspr = getk(LinRange(.01,1,100));
+        sl_stiffspr = getk(LinRange(1,40,200));
+        sl_softspr = getk(LinRange(.01,1,200));
         
-        npzwrite("./data/sl_temprun_tm.npz",sl_temprun_tm);
         npzwrite("./data/sl_stiffspr.npz",sl_stiffspr);
         npzwrite("./data/sl_softspr.npz",sl_softspr);
     end

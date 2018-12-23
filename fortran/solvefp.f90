@@ -4,28 +4,29 @@ contains
     subroutine fullrelax(p,nx,ny)
         implicit none
         integer::nx,ny
-        real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny)
+        real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny),dt
         
         call gengrid(nx,ny,hx,hy,xvals,yvals)
         eps = 1e-12
         error = 10
+        dt = .001
 
         error = sqrt(sum(p**2))
         do while(error>eps)
             p2 = p
-            call relaxstep(p,xvals,yvals)
-            error = sqrt(sum(p**2))
+            call relaxstep(p,xvals,yvals,dt)
+            error = sqrt(sum((p2-p)**2))
             write(*,*) 'error = ',error
         enddo
 
         p = p2        
     endsubroutine
 
-    subroutine relaxstep(p,xvals,yvals)
+    subroutine relaxstep(p,xvals,yvals,dt)
         implicit none
-        real *8::p(:,:),xvals(:),yvals(:),hx,temp(2)
+        real *8::p(:,:),xvals(:),yvals(:),hx,temp(2),dt
         real *8,allocatable::p2(:,:),ax(:,:)
-        integer::nx,ny,i,j
+        integer::nx,ny,i,j,m
 
         nx = size(p(:,1))-2
         ny = size(p(1,:))
@@ -40,9 +41,14 @@ contains
         enddo
 
         call update_ghosts(ax,p,hx)
+        m = size(term1(p,xvals,yvals))
+
+        write(*,*) sum(term1(p,xvals,yvals))/m
+        write(*,*) sum(term2(p,xvals,yvals))/m
+        write(*,*) sum(term3(p,xvals,yvals))/m
         p2 = term1(p,xvals,yvals)+term2(p,xvals,yvals)+term3(p,xvals,yvals)
         
-        p = p2
+        p = p + dt*p2
     endsubroutine relaxstep
 
     function term3(p,xvals,yvals)
