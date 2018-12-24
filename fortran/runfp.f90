@@ -6,7 +6,7 @@ real *8,allocatable::p(:,:),xvals(:),yvals(:)
 real *8::hx,hy
 
 nx = 1000
-ny = 1000
+ny = 100
 allocate(p(nx+2,ny+2),xvals(nx),yvals(ny))
 call gengrid(nx,ny,hx,hy,xvals,yvals)
 p(:,:) = 0

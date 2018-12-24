@@ -4,27 +4,27 @@ contains
     subroutine fullrelax(p,nx,ny)
         implicit none
         integer::nx,ny
-        real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny),dt
+        real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny)
         
         call gengrid(nx,ny,hx,hy,xvals,yvals)
         eps = 1e-12
         error = 10
-        dt = .001
+
 
         error = sqrt(sum(p**2))
         do while(error>eps)
             p2 = p
-            call relaxstep(p,xvals,yvals,dt)
+            call relaxstep(p,xvals,yvals)
             error = sqrt(sum((p2-p)**2))
-            write(*,*) 'error = ',error
+!            write(*,*) 'error = ',error
         enddo
 
         p = p2        
     endsubroutine
 
-    subroutine relaxstep(p,xvals,yvals,dt)
+    subroutine relaxstep(p,xvals,yvals)
         implicit none
-        real *8::p(:,:),xvals(:),yvals(:),hx,temp(2),dt
+        real *8::p(:,:),xvals(:),yvals(:),hx,temp(2)
         real *8,allocatable::p2(:,:),ax(:,:)
         integer::nx,ny,i,j,m
 
@@ -43,25 +43,25 @@ contains
         call update_ghosts(ax,p,hx)
         m = size(term1(p,xvals,yvals))
 
-        write(*,*) sum(term1(p,xvals,yvals))/m
-        write(*,*) sum(term2(p,xvals,yvals))/m
-        write(*,*) sum(term3(p,xvals,yvals))/m
+!        write(*,*) sum(term1(p,xvals,yvals))/m
+!        write(*,*) sum(term2(p,xvals,yvals))/m
+!        write(*,*) sum(term3(p,xvals,yvals))/m
         p2 = term1(p,xvals,yvals)+term2(p,xvals,yvals)+term3(p,xvals,yvals)
         
-        p = p + dt*p2
+        p = p + p2
     endsubroutine relaxstep
 
     function term3(p,xvals,yvals)
         implicit none
         real *8::p(:,:),xvals(:),yvals(:),b(2,2),hx,hy
         integer::nx,ny,i,j
-        real *8,allocatable::term3(:,:),px(:,:),py(:,:),pxx(:,:),pyy(:,:),pxy(:,:)
+        real *8,allocatable::term3(:,:),px(:,:),py(:,:),pxx(:,:),pyy(:,:),pxy(:,:),pxy2(:,:)
 
         nx = size(p(:,1))-2
         ny = size(p(1,:))
         hx = xvals(2)-xvals(1)
         hy = yvals(2)-yvals(1)
-        allocate(term3(nx+2,ny),px(nx+2,ny),py(nx+2,ny),pyy(nx+2,ny),pxx(nx+2,ny),pxy(nx+2,ny))
+        allocate(term3(nx+2,ny),px(nx+2,ny),py(nx+2,ny),pyy(nx+2,ny),pxx(nx+2,ny),pxy(nx+2,ny),pxy2(nx+2,ny))
         term3(:,:) = 0
         b = barray()
         do i = 1,nx
@@ -74,8 +74,14 @@ contains
             py(i+1,:) = specder(yvals(1),yvals(ny),ny,p(i+1,:))
         enddo
         do i = 1,ny
+            px(:,i) = compder(p(:,1),nx)/hx
             pxy(:,i) = compder(py(:,i),nx)/hx
         enddo
+        do i = 1,nx
+            pxy2(i+1,:) = specder(yvals(1),yvals(ny),ny,px(i+1,:))
+        enddo
+
+        write(*,*) sqrt(sum((pxy(2:nx+1,:)-pxy2(2:nx+1,:))**2)/size(pxy))
 
         term3 = b(1,1)*pxx+b(2,2)*pyy+2*b(1,2)*pxy
     endfunction term3
@@ -164,12 +170,13 @@ contains
        xspr = sqrt(2*tbar/k)
        xmax = consts(8)*xspr
        
-       hy = ymax/ny
-       hx = 2*xmax/nx
 
        xvals = linspace(-xmax,xmax,nx)
        yvals = linspace2(0.0d0,ymax,ny) !y is a periodic coordinate so we don't
        !include the endpoint
+
+       hx = xvals(2)-xvals(1) 
+       hy = ymax/ny
 
     endsubroutine gengrid
     
@@ -181,10 +188,10 @@ contains
        lsmall = 1
        lbig = 9
        k=10
-       tau = 0.1
+       tau = 0
        tbar = 1
-       umax = 1
-       gm = 1
+       umax = 0
+       gm = 10000
        kmult = 10
        vals = (/lsmall,lbig,k,tau,tbar,umax,gm,kmult/)
        consts = vals(m)
@@ -195,7 +202,7 @@ contains
         implicit none
         real *8::x,y,k,diva
         k = consts(3)
-        diva = -k-5.0d0/4*(upp(y+x/2)+upp(y-x/2))
+        diva = -2/consts(7)*(k+5.0d0/4*(upp(y+x/2)+upp(y-x/2)))
 
     endfunction diva
 
@@ -248,7 +255,7 @@ contains
       barray(1,2) = tau
       barray(2,1) = tau
       barray(2,2) = 1
-      barray = tbar/(2*gm)*barray
+      barray = (-1)*tbar/(2*gm)*barray
 
     endfunction barray
 
@@ -386,6 +393,7 @@ contains
     do i = 1,n
       specder(i) = real(output2(i))
     end do
+    write(*,*) sqrt(sum(imag(output2)**2)/size(imag(output2)))
     end function specder
 
     function  linspace(a,b,n) !equivalent of python linspace, includes endpoint
