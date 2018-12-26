@@ -71,7 +71,7 @@ using NPZ
         n = 19;
         darr = LinRange(.05,.95,n);
         larr = LinRange(.05,.95,n);
-        nsteps = 1e6;
+        nsteps = 1000000;
         dt = .001;
 
         npart = 20;
@@ -94,4 +94,11 @@ using NPZ
         end
         return out
     end
+
+    function runsim()
+        
+        npzwrite("./data/sl_stiffspr.npz",sl_stiffspr);
+        npzwrite("./data/sl_softspr.npz",sl_softspr);
+    end
+
 end
