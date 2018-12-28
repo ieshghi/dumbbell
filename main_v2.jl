@@ -96,9 +96,13 @@ using NPZ
     end
 
     function runsim()
+        stiff = heatmap(10,10);
+        soft = heatmap(10,0.1);
+        mid = heatmap(10,1);
         
-        npzwrite("./data/sl_stiffspr.npz",sl_stiffspr);
-        npzwrite("./data/sl_softspr.npz",sl_softspr);
+        npzwrite("./data/stiffspr_v2.npz",stiff);
+        npzwrite("./data/softspr_v2.npz",soft);
+        npzwrite("./data/midspr_v2.npz",mid);
     end
 
 end
