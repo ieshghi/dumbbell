@@ -59,7 +59,7 @@ contains
         nx = size(xvals)
         ny = size(yvals)
         allocate(p2(nx+2,ny+2))
-        p2 = p + 3/2*(step(p,xvals,yvals)-1/2*step(pp,xvals,yvals))
+        p2 = p + 3/2*step(p,xvals,yvals)-1/2*step(pp,xvals,yvals))
         p = p + p2
     endsubroutine relaxstep_bashforth
     
@@ -419,6 +419,20 @@ contains
     end do
 
     end function specder
+
+    function easy_fft(input,n)
+        use,intrinsic :: iso_c_binding
+        implicit none
+        include '/usr/local/include/fftw3.f03'
+        type(c_ptr) :: plan
+        integer:: n
+        integer *8::forward
+        complex(c_double_complex),dimension(n)::cinput,easy_fft
+            
+        call dfftw_plan_dft_1d_(forward,n, cinput,easy_fft,fftw_forward,fftw_estimate)
+        call dfftw_execute_(forward)
+        call dfftw_destroy_plan_(forward)
+    endfunction easy_fft
 
     function fftfreq(n)
         implicit none
