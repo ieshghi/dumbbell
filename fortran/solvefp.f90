@@ -17,10 +17,28 @@ contains
             call relaxstep(p,xvals,yvals)
             error = sqrt(sum((p2-p)**2))
 !            write(*,*) 'error = ',error
+        write(*,*) maxval(abs(p(1,:))),maxval(abs(p(nx,:))),maxval(abs(p(:,2)-p(:,ny+1))),sum(p)
         enddo
-
         p = p2        
     endsubroutine
+
+    function consts(m)
+       implicit none
+       integer::m
+       real *8::consts,lsmall,lbig,k,tau,tbar,gm,umax,kmult,vals(8)
+
+       lsmall = 1
+       lbig = 9
+       k=1
+       tau = 0
+       tbar = 1
+       umax = 0
+       gm = 100
+       kmult = 100
+       vals = (/lsmall,lbig,k,tau,tbar,umax,gm,kmult/)
+       consts = vals(m)
+
+    endfunction consts 
 
     subroutine relaxstep(p,xvals,yvals)
         implicit none
@@ -43,9 +61,6 @@ contains
         call update_ghosts(ax,p,hx)
         m = size(term1(p,xvals,yvals))
 
-!        write(*,*) sum(term1(p,xvals,yvals))/m
-!        write(*,*) sum(term2(p,xvals,yvals))/m
-!        write(*,*) sum(term3(p,xvals,yvals))/m
         p2 = term1(p,xvals,yvals)+term2(p,xvals,yvals)+term3(p,xvals,yvals)
         
         p = p + p2
@@ -53,51 +68,47 @@ contains
 
     function term3(p,xvals,yvals)
         implicit none
-        real *8::p(:,:),xvals(:),yvals(:),b(2,2),hx,hy
+        real *8::p(:,:),xvals(:),yvals(:),b(2,2),hx,hy,ymax
         integer::nx,ny,i,j
         real *8,allocatable::term3(:,:),px(:,:),py(:,:),pxx(:,:),pyy(:,:),pxy(:,:),pxy2(:,:)
 
+        ymax = consts(1)+consts(2)
         nx = size(p(:,1))-2
-        ny = size(p(1,:))
+        ny = size(p(1,:))-2
         hx = xvals(2)-xvals(1)
         hy = yvals(2)-yvals(1)
-        allocate(term3(nx+2,ny),px(nx+2,ny),py(nx+2,ny),pyy(nx+2,ny),pxx(nx+2,ny),pxy(nx+2,ny),pxy2(nx+2,ny))
+        allocate(term3(nx+2,ny+2),px(nx+2,ny+2),py(nx+2,ny+2),pyy(nx+2,ny+2),pxx(nx+2,ny+2),pxy(nx+2,ny+2),pxy2(nx+2,ny+2))
         term3(:,:) = 0
         b = barray()
         do i = 1,nx
-            pyy(i+1,:) = spec2der(yvals(1),yvals(ny),ny,p(i+1,:))
+            pyy(i+1,:) = spec2der(yvals(1),ymax,ny,p(i+1,:))
         enddo
         do i = 1,ny
-            pxx(:,i) = comp2der(p(:,i),nx)/(hx*hx)
+            pxx(:,i+1) = comp2der(p(:,i+1),nx)/(hx*hx)
         enddo
         do i = 1,nx
-            py(i+1,:) = specder(yvals(1),yvals(ny),ny,p(i+1,:))
+            py(i+1,:) = specder(yvals(1),ymax,ny,p(i+1,:))
         enddo
         do i = 1,ny
-            px(:,i) = compder(p(:,1),nx)/hx
-            pxy(:,i) = compder(py(:,i),nx)/hx
+            pxy(:,i+1) = compder(py(:,i+1),nx)/hx
         enddo
-        do i = 1,nx
-            pxy2(i+1,:) = specder(yvals(1),yvals(ny),ny,px(i+1,:))
-        enddo
-
-        write(*,*) sqrt(sum((pxy(2:nx+1,:)-pxy2(2:nx+1,:))**2)/size(pxy))
 
         term3 = b(1,1)*pxx+b(2,2)*pyy+2*b(1,2)*pxy
     endfunction term3
 
     function term2(p,xvals,yvals)!term 2 looks like a . grad(p)
         implicit none
-        real *8::p(:,:),xvals(:),yvals(:),temp(2),hx,hy
+        real *8::p(:,:),xvals(:),yvals(:),temp(2),hx,hy,ymax
         integer::nx,ny,i,j
         real *8,allocatable::term2(:,:),ax(:,:),ay(:,:),px(:,:),py(:,:)
 
+        ymax = consts(1)+consts(2)
         nx = size(p(:,1))-2
-        ny = size(p(1,:))
+        ny = size(p(1,:))-2
         hx = xvals(2)-xvals(1)
         hy = yvals(2)-yvals(1)
 
-        allocate(term2(nx+2,ny),ax(nx,ny),ay(nx,ny),px(nx+2,ny),py(nx+2,ny))
+        allocate(term2(nx+2,ny+2),ax(nx,ny),ay(nx,ny),px(nx+2,ny+2),py(nx+2,ny+2))
         term2(:,:) = 0
 
         do i=1,nx
@@ -109,12 +120,12 @@ contains
         enddo
         
         do i = 1,nx
-            py(i+1,:) = specder(yvals(1),yvals(ny),ny,p(i+1,:))
+            py(i+1,:) = specder(yvals(1),ymax,ny,p(i+1,:))
         enddo
         do i = 1,ny
-            px(:,i) = compder(p(:,i+1),nx)/hx
+            px(:,i+1) = compder(p(:,i+1),nx)/hx
         enddo
-        term2(2:nx+1,:) = ax*px(2:nx+1,:)+ay*py(2:nx+1,:)
+        term2(2:nx+1,2:ny+1) = ax*px(2:nx+1,2:ny+1)+ay*py(2:nx+1,2:ny+1)
     endfunction term2
 
     function term1(p,xvals,yvals)!term 1 looks like div(a)
@@ -124,15 +135,15 @@ contains
         real *8,allocatable::term1(:,:)
 
         nx = size(p(:,1))-2
-        ny = size(p(1,:))
+        ny = size(p(1,:))-2
     
-        allocate(term1(nx+2,ny))
+        allocate(term1(nx+2,ny+2))
 
         term1(:,:) = 0
 
         do i = 1,nx
             do j = 1,ny
-                term1(i+1,j) = p(i+1,j)*diva(xvals(i),yvals(j))
+                term1(i+1,j+1) = p(i+1,j+1)*diva(xvals(i),yvals(j))
             enddo
         enddo
     endfunction term1
@@ -146,14 +157,18 @@ contains
         b = barray()
 
         nx = size(p(:,1))-2
-        ny = size(p(1,:))
+        ny = size(p(1,:))-2
         
         allocate(p_ng(nx,ny))
-        p_ng = p(2:nx+1,:)
+        p_ng = p(2:nx+1,2:ny+1)
 
-        do i = 1,ny
+        do i = 2,ny+1
             p(nx+2,i) = -2*hx/(b(1,2)+b(1,1))*ax(nx,i)*p_ng(nx,i)+p_ng(nx-1,i)
             p(1,i) = 2*hx/(b(1,2)+b(1,1))*ax(1,i)*p_ng(1,i)+p_ng(2,i)
+        enddo
+        do i = 2,nx+1
+            p(i,ny+2) = p(i,2)
+            p(i,1) = p(i,ny+1)
         enddo
 
     endsubroutine update_ghosts
@@ -176,28 +191,10 @@ contains
        !include the endpoint
 
        hx = xvals(2)-xvals(1) 
-       hy = ymax/ny
+       hy = yvals(2)-yvals(1)
 
     endsubroutine gengrid
     
-    function consts(m)
-       implicit none
-       integer::m
-       real *8::consts,lsmall,lbig,k,tau,tbar,gm,umax,kmult,vals(8)
-
-       lsmall = 1
-       lbig = 9
-       k=10
-       tau = 0
-       tbar = 1
-       umax = 0
-       gm = 10000
-       kmult = 10
-       vals = (/lsmall,lbig,k,tau,tbar,umax,gm,kmult/)
-       consts = vals(m)
-
-    endfunction consts 
-
     function diva(x,y)
         implicit none
         real *8::x,y,k,diva
@@ -318,12 +315,12 @@ contains
     implicit none
     include '/usr/local/include/fftw3.f03'
     type(c_ptr) :: plan
-    integer :: n,i
+    integer :: n,i,ier,lensav
     integer *8::plan_forward,plan_backward
     complex(c_double_complex), dimension(n) :: cinput,output,input2,output2
     real *8,dimension(n)::x,k,der,input,spec2der
     real *8,parameter::pi =3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862
-    real *8::xmin,xmax,dx
+    real *8::xmin,xmax,dx,wsav(2*n+15)
 
     cinput = cmplx(input,0.0D0,kind=16)
 
@@ -331,16 +328,7 @@ contains
     call dfftw_execute_(plan_forward)
     call dfftw_destroy_plan_(plan_forward)
 
-    do i = 1,n/2
-    k(i) = i-1.0d0
-    end do
-
-    k(n/2+1) = 0.0d0
-
-    do i = n/2+2,n
-    k(i) = (-1.0d0)*n+i-1.0d0
-    end do
-
+    k = fftfreq(n)
     do i=1,n
       input2(i) =-(2.0d0*pi/(xmax-xmin)*k(i))**2*output(i)/(n)
     end do
@@ -348,9 +336,9 @@ contains
     call dfftw_plan_dft_1d_(plan_backward,n, input2, output2,fftw_backward,fftw_estimate)
     call dfftw_execute_(plan_backward, input2, output2)
     call dfftw_destroy_plan_(plan_backward)
-
+    
     do i = 1,n
-      spec2der(i) = real(output2(i))
+      spec2der(i) = real(output2(i),kind=16)
     end do
     end function spec2der
 
@@ -372,16 +360,7 @@ contains
     call dfftw_execute_(plan_forward)
     call dfftw_destroy_plan_(plan_forward)
 
-    do i = 1,n/2
-    k(i) = i-1.0d0
-    end do
-
-    k(n/2+1) = 0.0d0
-
-    do i = n/2+2,n
-    k(i) = (-1.0d0)*n+i-1.0d0
-    end do
-
+    k = fftfreq(n)
     do i=1,n
       input2(i) =2.0d0*pi/(xmax-xmin)*k(i)*cmplx(0.0D0,1.0D0,kind=16)*output(i)/n
     end do
@@ -391,10 +370,32 @@ contains
     call dfftw_destroy_plan_(plan_backward)
 
     do i = 1,n
-      specder(i) = real(output2(i))
+      specder(i) = real(output2(i),kind=16)
     end do
-    write(*,*) sqrt(sum(imag(output2)**2)/size(imag(output2)))
+
     end function specder
+
+    function fftfreq(n)
+        implicit none
+        integer::n,i
+        real *8::fftfreq(n)
+
+        if (mod(n,2)==0) then
+            do i = 1,n/2+1
+                fftfreq(i) = i-1
+            enddo
+            do i = n/2+2,n
+                fftfreq(i) = i-n-1
+            enddo
+        else
+            do i = 1,(n+1)/2
+                fftfreq(i) = i-1
+            enddo
+            do i = (n+3)/2,n
+                fftfreq(i) = i-n-1
+            enddo
+        endif
+    endfunction fftfreq
 
     function  linspace(a,b,n) !equivalent of python linspace, includes endpoint
         implicit none

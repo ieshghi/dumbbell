@@ -13,7 +13,7 @@ p(:,:) = 0
 
 do i = 3,nx-2
 do j = 3,ny-2
-    p(i,j) = 0.01
+    p(i,j) = exp(100*(-xvals(i)**2-yvals(j)**2))
 enddo
 enddo
 
