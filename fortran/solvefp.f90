@@ -4,52 +4,87 @@ contains
     subroutine fullrelax(p,nx,ny)
         implicit none
         integer::nx,ny
-        real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny)
+        real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny),pp(nx,ny)
         
         call gengrid(nx,ny,hx,hy,xvals,yvals)
         eps = 1e-12
         error = 10
-
-
         error = sqrt(sum(p**2))
+
+        open(1,file = 'fpres/xder.dat')
+        open(2,file = 'fpres/yder.dat')
+
         do while(error>eps)
             p2 = p
-            call relaxstep(p,xvals,yvals)
+            write(2,*) p(nx/2,:)
+            write(1,*) p(:,ny/2)
+            
+            pp = eulerstep(p,xvals,yvals)
+            call relaxstep_bashforth(p,pp,xvals,yvals)
+
             error = sqrt(sum((p2-p)**2))
-!            write(*,*) 'error = ',error
-        write(*,*) maxval(abs(p(1,:))),maxval(abs(p(nx,:))),maxval(abs(p(:,2)-p(:,ny+1))),sum(p)
+            write(*,*) 'error = ',error,'norm = ',sum(p2-p)
         enddo
+        close(1)
+        close(2)
         p = p2        
-    endsubroutine
+    endsubroutine fullrelax
 
     function consts(m)
        implicit none
        integer::m
        real *8::consts,lsmall,lbig,k,tau,tbar,gm,umax,kmult,vals(8)
 
-       lsmall = 1
-       lbig = 9
-       k=1
-       tau = 0
-       tbar = 1
-       umax = 0
-       gm = 100
-       kmult = 100
+       lsmall = 4! 
+       lbig = 6  !These two set the relative width of the two parts of the potential. 
+       k = 0.1 !Stiffness of spring
+       tau = 0 !dimensionless temperature difference (dT/Tbar)
+       tbar = 1 !average temperature
+       umax = 1 !potential height
+       gm = 10 !friction coefficient. Essentially acts as 1/dt for timestepping
+       kmult = 5 !Since we can't sample the full spring stretching direction, we need to cut it off somewhere
+       !This sets the cutoff at some multiple of the thermal length of the spring
+
        vals = (/lsmall,lbig,k,tau,tbar,umax,gm,kmult/)
        consts = vals(m)
 
     endfunction consts 
-
-    subroutine relaxstep(p,xvals,yvals)
+           
+    subroutine relaxstep_bashforth(p,pp,xvals,yvals)
         implicit none
-        real *8::p(:,:),xvals(:),yvals(:),hx,temp(2)
+        integer::nx,ny
+        real *8::p(:,:),pp(:,:),xvals(:),yvals(:)
         real *8,allocatable::p2(:,:),ax(:,:)
+        
+        nx = size(xvals)
+        ny = size(yvals)
+        allocate(p2(nx+2,ny+2))
+        p2 = p + 3/2*(step(p,xvals,yvals)-1/2*step(pp,xvals,yvals))
+        p = p + p2
+    endsubroutine relaxstep_bashforth
+    
+    function eulerstep(p,xvals,yvals)
+        implicit none
+        integer::nx,ny
+        real *8::p(:,:),xvals(:),yvals(:),hx,temp(2),hy
+        real *8,allocatable::eulerstep(:,:)
+        nx = size(xvals)
+        ny = size(yvals)
+        allocate(eulerstep(nx+2,ny+2))
+        eulerstep = p + step(p,xvals,yvals)
+    endfunction eulerstep
+
+    function step(p,xvals,yvals)
+        implicit none
+        real *8::p(:,:),xvals(:),yvals(:),hx,temp(2),hy
+        real *8,allocatable::step(:,:),ax(:,:)
         integer::nx,ny,i,j,m
 
         nx = size(p(:,1))-2
-        ny = size(p(1,:))
+        ny = size(p(1,:))-2
         hx = xvals(2)-xvals(1)
-        allocate(p2(nx+2,ny),ax(nx,ny))
+        hy = yvals(2)-yvals(1)
+        allocate(step(nx+2,ny+2),ax(nx,ny))
         
         do i = 1,nx
             do j = 1,ny
@@ -58,14 +93,35 @@ contains
             enddo
         enddo
 
-        call update_ghosts(ax,p,hx)
-        m = size(term1(p,xvals,yvals))
+        call update_ghosts(ax,p,hx,hy)
+        step = term1(p,xvals,yvals)+term2(p,xvals,yvals)+term3(p,xvals,yvals)
+    endfunction step
 
-        p2 = term1(p,xvals,yvals)+term2(p,xvals,yvals)+term3(p,xvals,yvals)
+    subroutine update_ghosts(ax,p,hx,hy)
+        implicit none
+        real *8::ax(:,:),p(:,:),hx,hy,b(2,2)
+        real *8,allocatable:: p_ng(:,:)
+        integer::nx,ny,i,j
+
+        b = barray()
+
+        nx = size(p(:,1))-2
+        ny = size(p(1,:))-2
         
-        p = p + p2
-    endsubroutine relaxstep
+        allocate(p_ng(nx,ny))
+        p_ng = p(2:nx+1,2:ny+1)
 
+        do i = 1,ny
+             !p(1,i+1) = -2*ax(1,i)*hx*p(2,i+1)/b(1,1)+p(3,i+1)+b(1,2)/b(1,1)*hx/hy*(p(2,i+2)-p(2,i))
+             !p(nx+2,i+1) = 2*ax(nx,i)*hx*p(nx+1,i+1)/b(1,1)-p(nx,i+1)-b(1,2)/b(1,1)*hx/hy*(p(nx+1,i+2)-p(nx+1,i))
+
+        enddo
+        do i = 2,nx+1
+            p(i,1) = p(i,ny+1)
+            p(i,ny+2) = p(i,2)
+        enddo
+    endsubroutine update_ghosts
+    
     function term3(p,xvals,yvals)
         implicit none
         real *8::p(:,:),xvals(:),yvals(:),b(2,2),hx,hy,ymax
@@ -77,23 +133,30 @@ contains
         ny = size(p(1,:))-2
         hx = xvals(2)-xvals(1)
         hy = yvals(2)-yvals(1)
-        allocate(term3(nx+2,ny+2),px(nx+2,ny+2),py(nx+2,ny+2),pyy(nx+2,ny+2),pxx(nx+2,ny+2),pxy(nx+2,ny+2),pxy2(nx+2,ny+2))
+        allocate(term3(nx+2,ny+2),px(nx+2,ny+2),pyy(nx+2,ny+2),pxx(nx+2,ny+2),pxy(nx+2,ny+2))
+        px(:,:) = 0
+        pxy(:,:) = 0
+        pxx(:,:) = 0
+        pyy(:,:) = 0
         term3(:,:) = 0
         b = barray()
         do i = 1,nx
-            pyy(i+1,:) = spec2der(yvals(1),ymax,ny,p(i+1,:))
+            !pyy(i+1,:) = comp2der(p(i+1,:),ny)/(hy*hy)
+            pyy(i+1,2:ny+1) = spec2der(yvals(1),ymax,ny,p(i+1,2:ny+1))
         enddo
         do i = 1,ny
             pxx(:,i+1) = comp2der(p(:,i+1),nx)/(hx*hx)
         enddo
-        do i = 1,nx
-            py(i+1,:) = specder(yvals(1),ymax,ny,p(i+1,:))
-        enddo
         do i = 1,ny
-            pxy(:,i+1) = compder(py(:,i+1),nx)/hx
+            px(:,i+1) = compder(p(:,i+1),nx)/hx
+        enddo
+        do i = 1,nx
+            !pxy(i+1,:) = compder(p(i+1,:),ny)/hy
+            pxy(i+1,2:ny+1) = specder(yvals(1),ymax,ny,px(i+1,2:ny+1))
         enddo
 
         term3 = b(1,1)*pxx+b(2,2)*pyy+2*b(1,2)*pxy
+
     endfunction term3
 
     function term2(p,xvals,yvals)!term 2 looks like a . grad(p)
@@ -109,6 +172,8 @@ contains
         hy = yvals(2)-yvals(1)
 
         allocate(term2(nx+2,ny+2),ax(nx,ny),ay(nx,ny),px(nx+2,ny+2),py(nx+2,ny+2))
+        px(:,:) = 0
+        py(:,:) = 0
         term2(:,:) = 0
 
         do i=1,nx
@@ -120,12 +185,14 @@ contains
         enddo
         
         do i = 1,nx
-            py(i+1,:) = specder(yvals(1),ymax,ny,p(i+1,:))
+            py(i+1,:) = compder(p(i+1,:),ny)/hy
+            py(i+1,2:ny+1) = specder(yvals(1),ymax,ny,p(i+1,2:ny+1))
         enddo
         do i = 1,ny
             px(:,i+1) = compder(p(:,i+1),nx)/hx
         enddo
         term2(2:nx+1,2:ny+1) = ax*px(2:nx+1,2:ny+1)+ay*py(2:nx+1,2:ny+1)
+
     endfunction term2
 
     function term1(p,xvals,yvals)!term 1 looks like div(a)
@@ -148,30 +215,6 @@ contains
         enddo
     endfunction term1
     
-    subroutine update_ghosts(ax,p,hx)
-        implicit none
-        real *8::ax(:,:),p(:,:),hx,hy,b(2,2)
-        real *8,allocatable:: p_ng(:,:),pout(:,:)
-        integer::nx,ny,i,j
-
-        b = barray()
-
-        nx = size(p(:,1))-2
-        ny = size(p(1,:))-2
-        
-        allocate(p_ng(nx,ny))
-        p_ng = p(2:nx+1,2:ny+1)
-
-        do i = 2,ny+1
-            p(nx+2,i) = -2*hx/(b(1,2)+b(1,1))*ax(nx,i)*p_ng(nx,i)+p_ng(nx-1,i)
-            p(1,i) = 2*hx/(b(1,2)+b(1,1))*ax(1,i)*p_ng(1,i)+p_ng(2,i)
-        enddo
-        do i = 2,nx+1
-            p(i,ny+2) = p(i,2)
-            p(i,1) = p(i,ny+1)
-        enddo
-
-    endsubroutine update_ghosts
 
     subroutine gengrid(nx,ny,hx,hy,xvals,yvals)
        implicit none
@@ -180,11 +223,13 @@ contains
        
        ymax = consts(1)+consts(2)
        k = consts(3)
+       if (k==0) then
+           k = 1
+       endif
        tbar = consts(5)
 
        xspr = sqrt(2*tbar/k)
        xmax = consts(8)*xspr
-       
 
        xvals = linspace(-xmax,xmax,nx)
        yvals = linspace2(0.0d0,ymax,ny) !y is a periodic coordinate so we don't
