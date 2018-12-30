@@ -3,27 +3,36 @@ contains
 
 subroutine fullrelax(p,nx,ny)
     implicit none
-    integer::nx,ny
+    integer::nx,ny,i
     real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny),pp(nx,ny)
         
     call gengrid(nx,ny,hx,hy,xvals,yvals)
     eps = 1e-12
-    error = 10
+    error =10
 
     open(1,file = 'fpres/xder.dat')
     open(2,file = 'fpres/yder.dat')
 
-    do while(error>eps)
-        p2 = p
+    pp = timestep_eul(nx,ny,xvals,yvals,p)
+    do i = 1,5!while(error>eps)
         write(2,*) p(nx/2,:)
         write(1,*) p(:,ny/2)
             
-        pp = timestep_eul(nx,ny,xvals,yvals,p)
-        p = timestep(nx,ny,xvals,yvals,p,pp)
+        p2 = pp
+        pp = timestep(nx,ny,xvals,yvals,pp,p)
+        p = p2
 
-        error = sqrt(sum((p2-p)**2))
-        write(*,*) 'error = ',error,'norm = ',sum(p)
+        error = sqrt(sum((pp-p)**2))
+        write(*,*) 'error = ',error,'norm = ',sum(p2)
     enddo
+
+    open(1,file = 'fpres/pp.dat')
+    do i = 1,nx
+        write(1,*) pp(i,:)
+    enddo
+    close(1)
+
+
     close(1)
     close(2)
     p = p2        
@@ -51,14 +60,14 @@ function timestep(nx,ny,xvals,yvals,p,pold)
         rsvec = rs(:,i) + matvec(rhs_der_oper(nx,k(i)),cpft(:,i),nx)
         call boundfix(ls,rsvec,k(i),cp(:,i))
         call zgesv(nx,1,ls,nx,ipiv,rsvec,nx,info)
-        timestep(:,i) = real(easy_ifft(rsvec/ny,ny))
+        timestep(:,i) = abs(easy_ifft(rsvec/ny,ny))
     enddo
 
 endfunction timestep
 
 function timestep_eul(nx,ny,xvals,yvals,p)
     implicit none
-    complex *16,dimension(nx,ny)::rs,cp,cpft
+    complex *16,dimension(nx,ny)::rs,cp,cpft,tstep_cp
     complex *16::ls(nx,nx),rsvec(nx)
     real *8::xvals(nx),yvals(ny),p(nx,ny),k(ny),ymax,timestep_eul(nx,ny)
     real *8, parameter:: pi = acos(-1.0d0)
@@ -74,14 +83,20 @@ function timestep_eul(nx,ny,xvals,yvals,p)
     do i = 1,nx
         cpft(i,:) = easy_fft(cp(i,:),ny)
     enddo
+!    open(3,file='err/rsvec.dat')
+!    open(4,file='err/isvec.dat')
     do i = 1,ny
         ls = der_oper(nx,k(i))
         rsvec = rs(:,i) + matvec(rhs_der_oper(nx,k(i)),cpft(:,i),nx)
         call boundfix(ls,rsvec,k(i),cp(:,i))
         call zgesv(nx,1,ls,nx,ipiv,rsvec,nx,info)
-        timestep_eul(:,i) = real(easy_ifft(rsvec/ny,ny))
+        tstep_cp(:,i) = easy_ifft(rsvec,ny)
+        timestep_eul(:,i) = abs(easy_ifft(rsvec/ny,ny))
+!        write(3,*) real(tstep_cp(:,i))
+!        write(4,*) imag(tstep_cp(:,i))
     enddo
-
+!    close(3)
+!    close(4)
 endfunction timestep_eul
 
 subroutine boundfix(ls,rsvec,k,cp)
@@ -173,14 +188,14 @@ endfunction gtilde
        integer::m
        real *8::consts,lsmall,lbig,k,tau,tbar,gm,umax,kmult,vals(8)
 
-       lsmall = 4! 
-       lbig = 6  !These two set the relative width of the two parts of the potential. 
+       lsmall = 1! 
+       lbig = 9  !These two set the relative width of the two parts of the potential. 
        k = 0.1 !Stiffness of spring
-       tau = 0.5 !dimensionless temperature difference (dT/Tbar)
-       tbar = 1 !average temperature
+       tau = 0 !dimensionless temperature difference (dT/Tbar)
+       tbar = 0.5 !average temperature
        umax = 1 !potential height
-       gm = 10 !friction coefficient. Essentially acts as 1/dt for timestepping
-       kmult = 5 !Since we can't sample the full spring stretching direction, we need to cut it off somewhere
+       gm = 100 !friction coefficient. Essentially acts as 1/dt for timestepping
+       kmult = 10 !Since we can't sample the full spring stretching direction, we need to cut it off somewhere
        !This sets the cutoff at some multiple of the thermal length of the spring
 
        vals = (/lsmall,lbig,k,tau,tbar,umax,gm,kmult/)

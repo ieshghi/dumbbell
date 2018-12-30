@@ -14,20 +14,19 @@ contains
         open(1,file = 'fpres/xder.dat')
         open(2,file = 'fpres/yder.dat')
 
+        pp = eulerstep(p,xvals,yvals)
         do while(error>eps)
-            p2 = p
             write(2,*) p(nx/2,:)
             write(1,*) p(:,ny/2)
             
-            pp = eulerstep(p,xvals,yvals)
-            call relaxstep_bashforth(p,pp,xvals,yvals)
+            call relaxstep_bashforth(pp,p,xvals,yvals)
 
-            error = sqrt(sum((p2-p)**2))
-            write(*,*) 'error = ',error,'norm = ',sum(p2-p)
+            error = sqrt(sum((pp-p)**2))
+            write(*,*) 'error = ',error,'norm = ',sum(p)
         enddo
         close(1)
         close(2)
-        p = p2        
+        p = pp        
     endsubroutine fullrelax
 
     function consts(m)
@@ -41,7 +40,7 @@ contains
        tau = 0 !dimensionless temperature difference (dT/Tbar)
        tbar = 1 !average temperature
        umax = 1 !potential height
-       gm = 10 !friction coefficient. Essentially acts as 1/dt for timestepping
+       gm = 1000 !friction coefficient. Essentially acts as 1/dt for timestepping
        kmult = 5 !Since we can't sample the full spring stretching direction, we need to cut it off somewhere
        !This sets the cutoff at some multiple of the thermal length of the spring
 
@@ -50,17 +49,18 @@ contains
 
     endfunction consts 
            
-    subroutine relaxstep_bashforth(p,pp,xvals,yvals)
+    subroutine relaxstep_bashforth(p,pold,xvals,yvals)
         implicit none
         integer::nx,ny
-        real *8::p(:,:),pp(:,:),xvals(:),yvals(:)
+        real *8::p(:,:),pold(:,:),xvals(:),yvals(:)
         real *8,allocatable::p2(:,:),ax(:,:)
         
         nx = size(xvals)
         ny = size(yvals)
         allocate(p2(nx+2,ny+2))
-        p2 = p + 3/2*step(p,xvals,yvals)-1/2*step(pp,xvals,yvals)
-        p = p + p2
+        p2 = p + 3/2*step(p,xvals,yvals)-1/2*step(pold,xvals,yvals)
+        pold = p
+        p = p2
     endsubroutine relaxstep_bashforth
     
     function eulerstep(p,xvals,yvals)
