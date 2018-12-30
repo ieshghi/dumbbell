@@ -59,7 +59,7 @@ contains
         nx = size(xvals)
         ny = size(yvals)
         allocate(p2(nx+2,ny+2))
-        p2 = p + 3/2*step(p,xvals,yvals)-1/2*step(pp,xvals,yvals))
+        p2 = p + 3/2*step(p,xvals,yvals)-1/2*step(pp,xvals,yvals)
         p = p + p2
     endsubroutine relaxstep_bashforth
     
@@ -420,7 +420,7 @@ contains
 
     end function specder
 
-    function easy_fft(input,n)
+    function easy_fft(cinput,n)
         use,intrinsic :: iso_c_binding
         implicit none
         include '/usr/local/include/fftw3.f03'

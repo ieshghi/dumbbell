@@ -1,12 +1,12 @@
 program runfp
-use solvefp
+use fancy_timestep
 implicit none
 integer::nx,ny,i,j
 real *8,allocatable::p(:,:),xvals(:),yvals(:)
 real *8::hx,hy
 
-nx = 100
-ny = 10
+nx = 200
+ny = 200
 
 nx = nx+2
 ny = ny+2
