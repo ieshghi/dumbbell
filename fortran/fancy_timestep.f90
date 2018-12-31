@@ -14,25 +14,21 @@ subroutine fullrelax(p,nx,ny)
     open(2,file = 'fpres/yder.dat')
 
     pp = timestep_eul(nx,ny,xvals,yvals,p)
-    do i = 1,5!while(error>eps)
+    do while(error>eps)
         write(2,*) p(nx/2,:)
         write(1,*) p(:,ny/2)
-            
         p2 = pp
         pp = timestep(nx,ny,xvals,yvals,pp,p)
+        error = maxval(pp-p)/maxval(p)
+        write(*,*) 'error = ',error,'norm = ',sum(p)
         p = p2
-
-        error = sqrt(sum((pp-p)**2))
-        write(*,*) 'error = ',error,'norm = ',sum(p2)
     enddo
 
-    open(1,file = 'fpres/pp.dat')
+    open(6,file = 'fpres/pp.dat')
     do i = 1,nx
-        write(1,*) pp(i,:)
+        write(6,*) pp(i,:)
     enddo
-    close(1)
-
-
+    close(6)
     close(1)
     close(2)
     p = p2        
@@ -56,13 +52,16 @@ function timestep(nx,ny,xvals,yvals,p,pold)
         cpft(i,:) = easy_fft(cp(i,:),ny)
     enddo
     do i = 1,ny
-        ls = der_oper(nx,k(i))
         rsvec = rs(:,i) + matvec(rhs_der_oper(nx,k(i)),cpft(:,i),nx)
+        call fftshift(rsvec)
+        call rfftshift(k)
+        ls = der_oper(nx,k(i))
         call boundfix(ls,rsvec,k(i),cp(:,i))
         call zgesv(nx,1,ls,nx,ipiv,rsvec,nx,info)
-        timestep(:,i) = abs(easy_ifft(rsvec/ny,ny))
+        call ifftshift(rsvec)
+        call irfftshift(k)
+        timestep(:,i) = abs(easy_ifft(rsvec,ny))
     enddo
-
 endfunction timestep
 
 function timestep_eul(nx,ny,xvals,yvals,p)
@@ -86,12 +85,16 @@ function timestep_eul(nx,ny,xvals,yvals,p)
 !    open(3,file='err/rsvec.dat')
 !    open(4,file='err/isvec.dat')
     do i = 1,ny
-        ls = der_oper(nx,k(i))
         rsvec = rs(:,i) + matvec(rhs_der_oper(nx,k(i)),cpft(:,i),nx)
+        call fftshift(rsvec)
+        call rfftshift(k)
+        ls = der_oper(nx,k(i))
         call boundfix(ls,rsvec,k(i),cp(:,i))
         call zgesv(nx,1,ls,nx,ipiv,rsvec,nx,info)
+        call ifftshift(rsvec)
+        call irfftshift(k)
         tstep_cp(:,i) = easy_ifft(rsvec,ny)
-        timestep_eul(:,i) = abs(easy_ifft(rsvec/ny,ny))
+        timestep_eul(:,i) = abs(easy_ifft(rsvec,ny))
 !        write(3,*) real(tstep_cp(:,i))
 !        write(4,*) imag(tstep_cp(:,i))
     enddo
@@ -194,7 +197,7 @@ endfunction gtilde
        tau = 0 !dimensionless temperature difference (dT/Tbar)
        tbar = 0.5 !average temperature
        umax = 1 !potential height
-       gm = 100 !friction coefficient. Essentially acts as 1/dt for timestepping
+       gm = 1000 !friction coefficient. Essentially acts as 1/dt for timestepping
        kmult = 10 !Since we can't sample the full spring stretching direction, we need to cut it off somewhere
        !This sets the cutoff at some multiple of the thermal length of the spring
 
@@ -519,7 +522,7 @@ endfunction gtilde
         integer *8::backward
         complex(c_double_complex),dimension(n)::cinput,easy_ifft
             
-        call dfftw_plan_dft_1d_(backward,n, cinput,easy_ifft,fftw_backward,fftw_estimate)
+        call dfftw_plan_dft_1d_(backward,n, cinput/n,easy_ifft,fftw_backward,fftw_estimate)
         call dfftw_execute_(backward)
         call dfftw_destroy_plan_(backward)
 
@@ -582,4 +585,114 @@ endfunction gtilde
         enddo
         enddo
     endfunction matvec
+    
+    subroutine fftshift(vec)
+        implicit none
+        complex *16::vec(:)
+        complex *16,allocatable::dummy(:)
+        integer::i,n
+        n = size(vec)
+        allocate(dummy(n))
+        dummy = vec
+        if (mod(n,2)==0) then
+            do i = 1,n/2
+                vec(i) = dummy(i+n/2)
+            enddo
+            vec(n/2+1) = dummy(1)
+            do i = n/2+2,n
+                vec(i) = dummy(i-n/2)
+            enddo
+        else
+            do i = 1,(n-1)/2
+                vec(i) = dummy((n+1)/2+i)
+            enddo
+            vec((n+1)/2) = dummy(1)
+            do i = (n+3)/2,n
+                vec(i) = dummy(i-(n-1)/2)
+            enddo
+        endif
+    endsubroutine fftshift
+
+    subroutine ifftshift(vec)
+        implicit none
+        complex *16::vec(:)
+        complex *16,allocatable::dummy(:)
+        integer::i,n
+        n = size(vec)
+        allocate(dummy(n))
+        dummy = vec
+        if (mod(n,2)==0) then
+            do i = 1,n/2
+                vec(i+n/2) = dummy(i)
+            enddo
+            vec(1) = dummy(n/2+1)
+            do i = n/2+2,n
+                vec(i-n/2) = dummy(i)
+            enddo
+        else
+            do i = 1,(n-1)/2
+                vec(i+(n+1)/2) = dummy(i)
+            enddo
+            vec(1) = dummy((n+1)/2)
+            do i = (n+3)/2,n
+                vec(i-(n-1)/2) = dummy(i)
+            enddo
+        endif   
+    endsubroutine ifftshift
+
+    subroutine rfftshift(vec)
+        implicit none
+        real *8::vec(:)
+        real *8,allocatable::dummy(:)
+        integer::i,n
+        n = size(vec)
+        allocate(dummy(n))
+        dummy = vec
+        if (mod(n,2)==0) then
+            do i = 1,n/2
+                vec(i) = dummy(i+n/2)
+            enddo
+            vec(n/2+1) = dummy(1)
+            do i = n/2+2,n
+                vec(i) = dummy(i-n/2)
+            enddo
+        else
+            do i = 1,(n-1)/2
+                vec(i) = dummy((n+1)/2+i)
+            enddo
+            vec((n+1)/2) = dummy(1)
+            do i = (n+3)/2,n
+                vec(i) = dummy(i-(n-1)/2)
+            enddo
+        endif
+    endsubroutine rfftshift
+
+    subroutine irfftshift(vec)
+        implicit none
+        real *8::vec(:)
+        real *8,allocatable::dummy(:)
+        integer::i,n
+        n = size(vec)
+        allocate(dummy(n))
+        dummy = vec
+        if (mod(n,2)==0) then
+            do i = 1,n/2
+                vec(i+n/2) = dummy(i)
+            enddo
+            vec(1) = dummy(n/2+1)
+            do i = n/2+2,n
+                vec(i-n/2) = dummy(i)
+            enddo
+        else
+            do i = 1,(n-1)/2
+                vec(i+(n+1)/2) = dummy(i)
+            enddo
+            vec(1) = dummy((n+1)/2)
+            do i = (n+3)/2,n
+                vec(i-(n-1)/2) = dummy(i)
+            enddo
+        endif   
+    endsubroutine irfftshift
+
+
 endmodule fancy_timestep
