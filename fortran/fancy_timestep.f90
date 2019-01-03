@@ -14,21 +14,24 @@ subroutine fullrelax(p,nx,ny)
     open(2,file = 'fpres/yder.dat')
 
     pp = timestep_eul(nx,ny,xvals,yvals,p)
+    i = 0
     do while(error>eps)
         write(2,*) p(nx/2,:)
         write(1,*) p(:,ny/2)
         p2 = pp
         pp = timestep(nx,ny,xvals,yvals,pp,p)
         error = maxval(pp-p)/maxval(p)
-        write(*,*) 'error = ',error,'norm = ',sum(p)
+        write(*,*) 'error = ',error,'norm = ',sum((p)),i
         p = p2
+        i = i+1
     enddo
 
-    open(6,file = 'fpres/pp.dat')
-    do i = 1,nx
-        write(6,*) pp(i,:)
-    enddo
-    close(6)
+    !open(19,file = 'fpres/pp.dat')
+    !do i = 1,nx
+    !    write(19,*) pp(i,:)
+    !enddo
+    !close(19)
+
     close(1)
     close(2)
     p = p2        
@@ -36,92 +39,109 @@ endsubroutine fullrelax
 
 function timestep(nx,ny,xvals,yvals,p,pold)
     implicit none
-    complex *16,dimension(nx,ny)::rs,cp,cpft
+    complex *16,dimension(nx,ny)::rs,cp,cpft,tstep_cp,axp
     complex *16::ls(nx,nx),rsvec(nx)
-    real *8::xvals(nx),yvals(ny),p(nx,ny),pold(nx,ny),k(ny),ymax,timestep(nx,ny)
+    real *8::xvals(nx),yvals(ny),p(nx,ny),pold(nx,ny),k(ny),ymax,timestep(nx,ny),ax(nx,ny)
+    real *8::temp(2),hx
     real *8, parameter:: pi = acos(-1.0d0)
     integer::nx,ny
-    integer::i,info,ipiv(nx)
+    integer::i,info,ipiv(nx),j
     cp = cmplx(p,0.0D0,kind=16)
-
     ymax = consts(1)+consts(2)
     k = 2*pi*fftfreq(ny)/(ymax-yvals(1))
-
+    hx = xvals(2)-xvals(1)
     rs = 1/2*(3*gtilde(p,xvals,yvals)-gtilde(pold,xvals,yvals))
+
+    do i = 1,nx
+        do j = 1,ny
+           temp = avec(xvals(i),yvals(j))
+           ax(i,j) = temp(1)
+        enddo
+    enddo
+
     do i = 1,nx
         cpft(i,:) = easy_fft(cp(i,:),ny)
+        axp(i,:) = easy_fft(cp(i,:)*ax(i,:),ny)
     enddo
     do i = 1,ny
         rsvec = rs(:,i) + matvec(rhs_der_oper(nx,k(i)),cpft(:,i),nx)
-        call fftshift(rsvec)
-        call rfftshift(k)
         ls = der_oper(nx,k(i))
-        call boundfix(ls,rsvec,k(i),cp(:,i))
+        call boundfix(ls,rsvec,k(i),cp(:,i),axp(:,i),hx)
         call zgesv(nx,1,ls,nx,ipiv,rsvec,nx,info)
-        call ifftshift(rsvec)
-        call irfftshift(k)
-        timestep(:,i) = abs(easy_ifft(rsvec,ny))
+        tstep_cp(:,i) = rsvec
+    enddo
+    do i = 1,nx
+        timestep(i,:) = real(easy_ifft(tstep_cp(i,:),ny))
     enddo
 endfunction timestep
 
 function timestep_eul(nx,ny,xvals,yvals,p)
     implicit none
-    complex *16,dimension(nx,ny)::rs,cp,cpft,tstep_cp
-    complex *16::ls(nx,nx),rsvec(nx)
-    real *8::xvals(nx),yvals(ny),p(nx,ny),k(ny),ymax,timestep_eul(nx,ny)
+    complex *16,dimension(nx,ny)::rs,cp,cpft,tstep_cp,axp
+    complex *16::ls(nx,nx),rsvec(nx),rsvec_old(nx)
+    real *8::xvals(nx),yvals(ny),p(nx,ny),k(ny),ymax,timestep_eul(nx,ny),ax(nx,ny)
+    real *8::temp(2),hx
     real *8, parameter:: pi = acos(-1.0d0)
     integer::nx,ny
-    integer::i,info,ipiv(nx)
+    integer::i,info,ipiv(nx),j
     cp = cmplx(p,0.0D0,kind=16)
-
     ymax = consts(1)+consts(2)
     k = 2*pi*fftfreq(ny)/(ymax-yvals(1))
-
+    hx = xvals(2)-xvals(1)
+    
     rs = gtilde(p,xvals,yvals)
 
     do i = 1,nx
-        cpft(i,:) = easy_fft(cp(i,:),ny)
+        do j = 1,ny
+           temp = avec(xvals(i),yvals(j))
+           ax(i,j) = temp(1)
+        enddo
     enddo
-!    open(3,file='err/rsvec.dat')
-!    open(4,file='err/isvec.dat')
+
+    do i = 1,nx
+        cpft(i,:) = easy_fft(cp(i,:),ny)
+        axp(i,:) = easy_fft(cp(i,:)*ax(i,:),ny)
+    enddo
+
     do i = 1,ny
         rsvec = rs(:,i) + matvec(rhs_der_oper(nx,k(i)),cpft(:,i),nx)
-        call fftshift(rsvec)
-        call rfftshift(k)
         ls = der_oper(nx,k(i))
-        call boundfix(ls,rsvec,k(i),cp(:,i))
+        call boundfix(ls,rsvec,k(i),cpft(:,i),axp(:,i),hx)
         call zgesv(nx,1,ls,nx,ipiv,rsvec,nx,info)
-        call ifftshift(rsvec)
-        call irfftshift(k)
-        tstep_cp(:,i) = easy_ifft(rsvec,ny)
-        timestep_eul(:,i) = abs(easy_ifft(rsvec,ny))
-!        write(3,*) real(tstep_cp(:,i))
-!        write(4,*) imag(tstep_cp(:,i))
+        tstep_cp(:,i) = rsvec
     enddo
-!    close(3)
-!    close(4)
+    do i = 1,nx
+        timestep_eul(i,:) = real(easy_ifft(tstep_cp(i,:),ny))
+    enddo
+   ! open(15,file = 'err/tstepr.dat')
+   ! open(16,file = 'err/tstepi.dat')
+   ! do i = 1,ny
+   !     write(15,*) real(tstep_cp(:,i))
+   !     write(16,*) imag(tstep_cp(:,i))
+   ! enddo
+   ! close(15)
+   ! close(16)
 endfunction timestep_eul
 
-subroutine boundfix(ls,rsvec,k,cp)
+subroutine boundfix(ls,rsvec,k,cp,axp,hx)
     implicit none
-    complex *16::ls(:,:),rsvec(:),cp(:),ik
-    real *8::k,b(2,2)
-    integer::nx,ny,i
+    complex *16::ls(:,:),rsvec(:),cp(:),ik,axp(:)
+    real *8::k,b(2,2),hx
+    integer::nx,i
     nx = size(cp)
     b = barray()
-    !This is very fishy... assume p = 0 at boundaries and solve for b.c. B_xx*d_x P = - B_xy*d_y P
     ik = cmplx(0.0D0,1.0D0,kind=16)*k
 
-    ls(1,1) = -3/2
-    ls(1,2) = 2
-    ls(1,3) = -1/2
+    ls(1,1) = -3/(2*hx)
+    ls(1,2) = 2/hx
+    ls(1,3) = -1/(2*hx)
 
-    ls(nx,nx) = 3/2
-    ls(nx,nx-1) = -2
-    ls(nx,nx-2) = 1/2
+    ls(nx,nx) = 3/(2*hx)
+    ls(nx,nx-1) = -2/hx
+    ls(nx,nx-2) = 1/(2*hx)
 
-    rsvec(1) = -ik*b(1,2)/b(1,1)*cp(1)
-    rsvec(nx) = -ik*b(1,2)/b(1,1)*cp(nx)
+    rsvec(1) = -ik*b(1,2)/b(1,1)*cp(1) + axp(1)/b(1,1)
+    rsvec(nx) = -ik*b(1,2)/b(1,1)*cp(nx) + axp(nx)/b(1,1)
 endsubroutine boundfix
 
 function rhs_der_oper(nx,k)
@@ -162,23 +182,14 @@ endfunction der_oper
 
 function gtilde(p,xvals,yvals)
     implicit none
-    real *8::p(:,:),xvals(:),yvals(:),temp(2)
-    real *8,allocatable,dimension(:,:)::ax,ay
+    real *8::p(:,:),xvals(:),yvals(:)
     complex *16,allocatable::gtilde(:,:),step(:,:)
     integer::nx,ny,i,j
 
     nx = size(p(:,1))
     ny = size(p(1,:))
-    allocate(gtilde(nx,ny),ax(nx,ny),ay(nx,ny),step(nx,ny))
+    allocate(gtilde(nx,ny),step(nx,ny))
         
-    do i = 1,nx
-        do j = 1,ny
-           temp = avec(xvals(i),yvals(j))
-           ax(i,j) = temp(1)
-           ay(i,j) = temp(2)
-        enddo
-    enddo
-
     step = (term1(p,xvals,yvals)+term2(p,xvals,yvals))*cmplx(1.0D0,0.0D0,kind=16)
     gtilde(:,:) = 0
     do i = 1,nx
@@ -191,13 +202,13 @@ endfunction gtilde
        integer::m
        real *8::consts,lsmall,lbig,k,tau,tbar,gm,umax,kmult,vals(8)
 
-       lsmall = 1! 
-       lbig = 9  !These two set the relative width of the two parts of the potential. 
+       lsmall = 3! 
+       lbig = 7  !These two set the relative width of the two parts of the potential. 
        k = 0.1 !Stiffness of spring
        tau = 0 !dimensionless temperature difference (dT/Tbar)
        tbar = 0.5 !average temperature
        umax = 1 !potential height
-       gm = 1000 !friction coefficient. Essentially acts as 1/dt for timestepping
+       gm = 0.01 ! inverse friction coefficient. Essentially acts as dt for timestepping
        kmult = 10 !Since we can't sample the full spring stretching direction, we need to cut it off somewhere
        !This sets the cutoff at some multiple of the thermal length of the spring
 
@@ -297,7 +308,6 @@ endfunction gtilde
             enddo
         enddo
     endfunction term1
-    
 
     subroutine gengrid(nx,ny,hx,hy,xvals,yvals)
        implicit none
@@ -327,8 +337,7 @@ endfunction gtilde
         implicit none
         real *8::x,y,k,diva
         k = consts(3)
-        diva = -2/consts(7)*(k+5.0d0/4*(upp(y+x/2)+upp(y-x/2)))
-
+        diva = -2*consts(7)*(k+5.0d0/4*(upp(y+x/2)+upp(y-x/2)))
     endfunction diva
 
     function upp(z)
@@ -336,7 +345,6 @@ endfunction gtilde
         real *8::z,upp
         
         upp = 0
-
     endfunction upp
 
     function uprime(z)
@@ -345,7 +353,7 @@ endfunction gtilde
         lsmall = consts(1)
         lbig = consts(2)
         umax = consts(6)
-
+        
         l = lsmall + lbig
         if (mod(z,l)<lsmall) then
             uprime = umax/lsmall
@@ -364,8 +372,8 @@ endfunction gtilde
       up = uprime(y+x/2)
       fx = -k*x-0.5*(up-um)
       fy = -up-um
-      avec(1) = 2*fx/gm
-      avec(2) = fy/(2*gm)
+      avec(1) = 2*fx*gm
+      avec(2) = fy*gm/(2)
     endfunction avec
 
     function barray()
@@ -380,7 +388,7 @@ endfunction gtilde
       barray(1,2) = tau
       barray(2,1) = tau
       barray(2,2) = 1
-      barray = (-1)*tbar/(2*gm)*barray
+      barray = (-1)*tbar*gm/(2)*barray
 
     endfunction barray
 
@@ -506,11 +514,13 @@ endfunction gtilde
         type(c_ptr) :: plan
         integer:: n
         integer *8::forward
-        complex(c_double_complex),dimension(n)::cinput,easy_fft
+        complex(c_double_complex),dimension(n)::easy_fft,input_copy,cinput
             
-        call dfftw_plan_dft_1d_(forward,n, cinput,easy_fft,fftw_forward,fftw_estimate)
+        input_copy = cinput
+        call dfftw_plan_dft_1d_(forward,n, input_copy,easy_fft,fftw_forward,fftw_estimate)
         call dfftw_execute_(forward)
         call dfftw_destroy_plan_(forward)
+        call fftshift(easy_fft)
     endfunction easy_fft
 
     function easy_ifft(cinput,n)
@@ -520,12 +530,14 @@ endfunction gtilde
         type(c_ptr) :: plan
         integer:: n
         integer *8::backward
-        complex(c_double_complex),dimension(n)::cinput,easy_ifft
+        complex(c_double_complex),dimension(n)::easy_ifft,input_copy,cinput
             
-        call dfftw_plan_dft_1d_(backward,n, cinput/n,easy_ifft,fftw_backward,fftw_estimate)
+        input_copy = cinput
+        call ifftshift(input_copy)
+        call dfftw_plan_dft_1d_(backward,n, input_copy,easy_ifft,fftw_backward,fftw_estimate)
         call dfftw_execute_(backward)
         call dfftw_destroy_plan_(backward)
-
+        easy_ifft = easy_ifft/n
     endfunction easy_ifft
 
     function fftfreq(n)
@@ -548,6 +560,7 @@ endfunction gtilde
                 fftfreq(i) = i-n-1
             enddo
         endif
+        call rfftshift(fftfreq)
     endfunction fftfreq
 
     function  linspace(a,b,n) !equivalent of python linspace, includes endpoint
