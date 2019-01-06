@@ -14,18 +14,20 @@ subroutine fullrelax(p,nx,ny)
     open(2,file = 'fpres/yder.dat')
 
     pp = timestep_eul(nx,ny,xvals,yvals,p)
+    !pp = lazy_euler(xvals,yvals,p)
     i = 0
     j = getcurrent(pp,xvals,yvals)
     dj = div(j(1,:,:),j(2,:,:),xvals,yvals)
-    do i = 1,10!while(1>0)!error>eps)
+    do while(1>0)!error>eps)
         write(2,*) p(nx/2,:)
         write(1,*) p(:,ny/2)
         p2 = pp
         pp = timestep(nx,ny,xvals,yvals,pp,p)
+        !pp = lazy_adams(xvals,yvals,pp,p)
         error = maxval(pp-p)/maxval(p)
         write(*,*) 'error = ',error,'norm = ',sum(p),i
         p = p2
-       ! i = i+1
+        i = i+1
     enddo
 
     open(19,file = 'fpres/jx.dat')
@@ -187,6 +189,37 @@ function timestep_eul(nx,ny,xvals,yvals,p)
     enddo
 endfunction timestep_eul
 
+function lazy_adams(xvals,yvals,p,pold)
+    implicit none
+    real *8::xvals(:),yvals(:),p(:,:),pold(:,:)
+    real *8,allocatable::lazy_adams(:,:),dp(:,:)
+    integer::nx,ny
+    
+    nx = size(xvals)
+    ny = size(yvals)
+    allocate(lazy_adams(nx,ny),dp(nx,ny))
+
+    dp = 3/2*(term1(p,xvals,yvals) + term2(p,xvals,yvals) + term3(p,xvals,yvals))
+    dp = dp - 1/2*(term1(p,xvals,yvals) + term2(p,xvals,yvals) + term3(p,xvals,yvals))
+    lazy_adams = p + dp
+
+endfunction lazy_adams
+function lazy_euler(xvals,yvals,p)
+    implicit none
+    real *8::xvals(:),yvals(:),p(:,:)
+    real *8,allocatable::lazy_euler(:,:),dp(:,:)
+    integer::nx,ny
+    
+    nx = size(xvals)
+    ny = size(yvals)
+    allocate(lazy_euler(nx,ny),dp(nx,ny))   
+
+    dp = term1(p,xvals,yvals) + term2(p,xvals,yvals) + term3(p,xvals,yvals)
+    write(*,*) shape(p),shape(dp),shape(lazy_euler)
+    lazy_euler = p + dp
+    
+endfunction lazy_euler
+
 subroutine boundfix(ls,rsvec,k,cp,axp,hx)
     implicit none
     complex *16::ls(:,:),rsvec(:),cp(:),ik,axp(:)
@@ -310,8 +343,8 @@ endfunction gtilde
         term3(:,:) = 0
         b = barray()
         do i = 1,nx
-            pyy(i,:) = comp2der(p(i,:),ny)/(hy*hy)
-            !pyy(i,:) = spec2der(yvals(1),ymax,ny,p(i,:))
+            !pyy(i,:) = comp2der(p(i,:),ny)/(hy*hy)
+            pyy(i,:) = spec2der(yvals(1),ymax,ny,p(i,:))
         enddo
         do i = 1,ny
             pxx(:,i) = comp2der(p(:,i),nx)/(hx*hx)
@@ -320,8 +353,8 @@ endfunction gtilde
             px(:,i) = compder(p(:,i),nx)/hx
         enddo
         do i = 1,nx
-            pxy(i,:) = compder(p(i,:),ny)/hy
-            !pxy(i,:) = specder(yvals(1),ymax,ny,px(i,:))
+            !pxy(i,:) = compder(p(i,:),ny)/hy
+            pxy(i,:) = specder(yvals(1),ymax,ny,px(i,:))
         enddo
 
         term3 = b(1,1)*pxx+b(2,2)*pyy+2*b(1,2)*pxy
@@ -354,8 +387,8 @@ endfunction gtilde
         enddo
         
         do i = 1,nx
-            !py(i,:) = specder(yvals(1),ymax,ny,p(i,:))
-            py(i,:) = compder(p(i,:),ny)/hy
+            py(i,:) = specder(yvals(1),ymax,ny,p(i,:))
+            !py(i,:) = compder(p(i,:),ny)/hy
         enddo
         do i = 1,ny
             px(:,i) = compder(p(:,i),nx)/hx
@@ -370,8 +403,8 @@ endfunction gtilde
         integer::nx,ny,i,j
         real *8,allocatable::term1(:,:)
 
-        nx = size(p(:,1))-2
-        ny = size(p(1,:))-2
+        nx = size(p(:,1))
+        ny = size(p(1,:))
     
         allocate(term1(nx,ny))
 
