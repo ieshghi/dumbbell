@@ -4,7 +4,7 @@ contains
 subroutine fullrelax(p,nx,ny)
     implicit none
     integer::nx,ny,i
-    real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny),pp(nx,ny)
+    real *8::p(nx,ny),xvals(nx),yvals(ny),hx,hy,eps,error,p2(nx,ny),pp(nx,ny),j(2,nx,ny),dj(nx,ny)
         
     call gengrid(nx,ny,hx,hy,xvals,yvals)
     eps = 1e-12
@@ -15,31 +15,98 @@ subroutine fullrelax(p,nx,ny)
 
     pp = timestep_eul(nx,ny,xvals,yvals,p)
     i = 0
-    do while(error>eps)
+    j = getcurrent(pp,xvals,yvals)
+    dj = div(j(1,:,:),j(2,:,:),xvals,yvals)
+    do i = 1,10!while(1>0)!error>eps)
         write(2,*) p(nx/2,:)
         write(1,*) p(:,ny/2)
         p2 = pp
         pp = timestep(nx,ny,xvals,yvals,pp,p)
         error = maxval(pp-p)/maxval(p)
-        write(*,*) 'error = ',error,'norm = ',sum((p)),i
+        write(*,*) 'error = ',error,'norm = ',sum(p),i
         p = p2
-        i = i+1
+       ! i = i+1
     enddo
 
-    !open(19,file = 'fpres/pp.dat')
-    !do i = 1,nx
-    !    write(19,*) pp(i,:)
-    !enddo
-    !close(19)
+    open(19,file = 'fpres/jx.dat')
+    do i = 1,nx
+        write(19,*) j(1,i,:)
+    enddo
+    close(19)
+    open(21,file = 'fpres/jy.dat')
+    do i = 1,nx
+        write(21,*) j(2,i,:)
+    enddo
+    close(21)
+    open(22,file = 'fpres/divj.dat')
+    do i = 1,nx
+        write(22,*) dj(i,:)
+    enddo
+    close(22)
+    open(20,file = 'fpres/dp.dat')
+    do i = 1,nx
+        write(20,*) (pp(i,:)-p(i,:))
+    enddo
+    close(20)
 
     close(1)
     close(2)
     p = p2        
 endsubroutine fullrelax
 
+function div(jx,jy,xvals,yvals)
+    implicit none
+    real *8::jx(:,:),jy(:,:),xvals(:),yvals(:),hx,hy,ymax
+    real *8,allocatable::div(:,:)
+    integer::nx,ny,i
+    ymax = consts(1)+consts(2)
+    nx = size(xvals)
+    ny = size(yvals)
+    hx = xvals(2)-xvals(1)
+    allocate(div(nx,ny))
+    div(:,:) = 0
+    do i = 1,ny
+        div(:,i) = compder(jx(:,i),nx)/hx
+    enddo
+    do i = 1,nx
+        div(i,:) = div(i,:) + specder(yvals(1),ymax,ny,jy(i,:))
+    enddo
+endfunction div
+
+function getcurrent(p,xvals,yvals)
+    implicit none
+    real *8::p(:,:),temp(2),xvals(:),yvals(:),ymax,b(2,2),hx,hy
+    real *8,allocatable::getcurrent(:,:,:),ax(:,:),ay(:,:)
+    integer::nx,ny,i,j
+    ymax = consts(1)+consts(2)
+    hx = xvals(2)-xvals(1)
+    hy = yvals(2)-yvals(1)
+    b = barray()
+    nx = size(p(:,1))
+    ny = size(p(1,:))
+    allocate(getcurrent(2,nx,ny),ax(nx,ny),ay(nx,ny))
+    do i = 1,nx
+    do j = 1,ny
+        temp = avec(xvals(i),yvals(j))
+        ax(i,j) = temp(1)
+        ay(i,j) = temp(2)
+    enddo
+    enddo
+    
+    do i = 1,ny
+        getcurrent(1,:,i) = ax(:,i)*p(:,i)+b(1,1)*compder(p(:,i),nx)/hx
+        getcurrent(2,:,i) = ay(:,i)*p(:,i)+b(1,2)*compder(p(:,i),nx)/hx
+    enddo
+    do i = 1,nx
+        getcurrent(1,i,:) = getcurrent(1,i,:) + b(1,2)*specder(yvals(1),ymax,ny,p(i,:))
+        getcurrent(2,i,:) = getcurrent(2,i,:) + b(2,2)*specder(yvals(1),ymax,ny,p(i,:))
+    enddo
+
+endfunction getcurrent
+
 function timestep(nx,ny,xvals,yvals,p,pold)
     implicit none
-    complex *16,dimension(nx,ny)::rs,cp,cpft,tstep_cp,axp
+    complex *16,dimension(nx,ny)::rs,cp,cpft,tstep_cp,cpold,axp
     complex *16::ls(nx,nx),rsvec(nx)
     real *8::xvals(nx),yvals(ny),p(nx,ny),pold(nx,ny),k(ny),ymax,timestep(nx,ny),ax(nx,ny)
     real *8::temp(2),hx
@@ -47,25 +114,28 @@ function timestep(nx,ny,xvals,yvals,p,pold)
     integer::nx,ny
     integer::i,info,ipiv(nx),j
     cp = cmplx(p,0.0D0,kind=16)
+    cpold = cmplx(pold,0.0D0,kind=16)
     ymax = consts(1)+consts(2)
     k = 2*pi*fftfreq(ny)/(ymax-yvals(1))
     hx = xvals(2)-xvals(1)
     rs = 1/2*(3*gtilde(p,xvals,yvals)-gtilde(pold,xvals,yvals))
 
-    do i = 1,nx
-        do j = 1,ny
-           temp = avec(xvals(i),yvals(j))
-           ax(i,j) = temp(1)
+    do i=1,nx
+        do j=1,ny
+            temp = avec(xvals(i),yvals(j))
+            ax(i,j) = temp(1)
         enddo
+    enddo
+    do i = 1,nx
+        axp(i,:) = easy_fft(ax(i,:)*1/2*(3*cp(i,:)-cpold(i,:)),ny)
     enddo
 
     do i = 1,nx
         cpft(i,:) = easy_fft(cp(i,:),ny)
-        axp(i,:) = easy_fft(cp(i,:)*ax(i,:),ny)
     enddo
     do i = 1,ny
-        rsvec = rs(:,i) + matvec(rhs_der_oper(nx,k(i)),cpft(:,i),nx)
-        ls = der_oper(nx,k(i))
+        rsvec = rs(:,i) + matvec(rhs_der_oper(nx,k(i),hx),cpft(:,i),nx)
+        ls = der_oper(nx,k(i),hx)
         call boundfix(ls,rsvec,k(i),cp(:,i),axp(:,i),hx)
         call zgesv(nx,1,ls,nx,ipiv,rsvec,nx,info)
         tstep_cp(:,i) = rsvec
@@ -91,21 +161,23 @@ function timestep_eul(nx,ny,xvals,yvals,p)
     
     rs = gtilde(p,xvals,yvals)
 
-    do i = 1,nx
-        do j = 1,ny
-           temp = avec(xvals(i),yvals(j))
-           ax(i,j) = temp(1)
+    do i=1,nx
+        do j=1,ny
+            temp = avec(xvals(i),yvals(j))
+            ax(i,j) = temp(1)
         enddo
+    enddo
+    do i = 1,nx
+        axp(i,:) = easy_fft(ax(i,:)*cp(i,:),ny)
     enddo
 
     do i = 1,nx
         cpft(i,:) = easy_fft(cp(i,:),ny)
-        axp(i,:) = easy_fft(cp(i,:)*ax(i,:),ny)
     enddo
 
     do i = 1,ny
-        rsvec = rs(:,i) + matvec(rhs_der_oper(nx,k(i)),cpft(:,i),nx)
-        ls = der_oper(nx,k(i))
+        rsvec = rs(:,i) + matvec(rhs_der_oper(nx,k(i),hx),cpft(:,i),nx)
+        ls = der_oper(nx,k(i),hx)
         call boundfix(ls,rsvec,k(i),cpft(:,i),axp(:,i),hx)
         call zgesv(nx,1,ls,nx,ipiv,rsvec,nx,info)
         tstep_cp(:,i) = rsvec
@@ -113,14 +185,6 @@ function timestep_eul(nx,ny,xvals,yvals,p)
     do i = 1,nx
         timestep_eul(i,:) = real(easy_ifft(tstep_cp(i,:),ny))
     enddo
-   ! open(15,file = 'err/tstepr.dat')
-   ! open(16,file = 'err/tstepi.dat')
-   ! do i = 1,ny
-   !     write(15,*) real(tstep_cp(:,i))
-   !     write(16,*) imag(tstep_cp(:,i))
-   ! enddo
-   ! close(15)
-   ! close(16)
 endfunction timestep_eul
 
 subroutine boundfix(ls,rsvec,k,cp,axp,hx)
@@ -140,32 +204,42 @@ subroutine boundfix(ls,rsvec,k,cp,axp,hx)
     ls(nx,nx-1) = -2/hx
     ls(nx,nx-2) = 1/(2*hx)
 
-    rsvec(1) = -ik*b(1,2)/b(1,1)*cp(1) + axp(1)/b(1,1)
-    rsvec(nx) = -ik*b(1,2)/b(1,1)*cp(nx) + axp(nx)/b(1,1)
+    rsvec(1) = -ik*b(1,2)/b(1,1)*cp(1) + axp(1)/(b(1,1))
+    rsvec(nx) = -ik*b(1,2)/b(1,1)*cp(nx) + axp(nx)/(b(1,1))
 endsubroutine boundfix
 
-function rhs_der_oper(nx,k)
+function rhs_der_oper(nx,k,hx)
     implicit none
     complex *16::rhs_der_oper(nx,nx),ik
-    real *8::k,b(2,2)
+    real *8::k,b(2,2),hx
     integer::nx,ny,i,j
     b = barray()/2
     
     ik = k*cmplx(0.0D0,1.0D0,kind=16) !double precision imaginary unit, needs revision when k is
 !    incorporated in the overall ODE solver
 
+    
     rhs_der_oper(:,:) = 0
+    rhs_der_oper(1,1) = 1 - 3/(2*hx)*2*ik*b(1,2) + 2/(hx**2)*b(1,1)-(ik)
+    rhs_der_oper(1,2) = 4/hx*ik*b(1,2)-5/(hx**2)*b(1,1)
+    rhs_der_oper(1,3) = -1/(hx)*ik*b(1,2)+4/(hx**2)*b(1,1)
+    rhs_der_oper(1,4) = -1/(hx**2)*b(1,1)
+    rhs_der_oper(nx,nx) = 1 + 3/(2*hx)*2*ik*b(1,2) + 2/(hx**2)*b(1,1)-(ik)
+    rhs_der_oper(nx,nx-1) = - 4/hx*ik*b(1,2)-5/(hx**2)*b(1,1)
+    rhs_der_oper(nx,nx-2) = 1/(hx)*ik*b(1,2)+4/(hx**2)*b(1,1)
+    rhs_der_oper(nx,nx-3) = -1/(hx**2)*b(1,1)
+    
     do i = 2,nx-1
-        rhs_der_oper(i,i-1) = 1/2*(b(1,1)-2*ik*b(1,2))
-        rhs_der_oper(i,i+1) = 1/2*(b(1,1)+2*ik*b(1,2))
-        rhs_der_oper(i,i) = 1-(ik)**2*b(2,2)+b(1,1)
+        rhs_der_oper(i,i-1) = 1/2*(2*b(1,1)/(hx**2)-2*ik*b(1,2)/hx)
+        rhs_der_oper(i,i+1) = 1/2*(2*b(1,1)/(hx**2)+2*ik*b(1,2)/hx)
+        rhs_der_oper(i,i) = 1+(ik)**2*b(2,2)-2*b(1,1)/(hx**2)
     enddo
 endfunction rhs_der_oper
 
-function der_oper(nx,k)
+function der_oper(nx,k,hx)
     implicit none
     complex *16::der_oper(nx,nx),ik
-    real *8::k,b(2,2)
+    real *8::k,b(2,2),hx
     real *8, parameter:: pi = acos(-1.0d0)
     integer::nx,ny,i,j
     b = barray()/2
@@ -174,9 +248,9 @@ function der_oper(nx,k)
 
     der_oper(:,:) = 0
     do i = 2,nx-1
-        der_oper(i,i-1) = -1/2*(b(1,1)-2*ik*b(1,2))
-        der_oper(i,i+1) = -1/2*(b(1,1)+2*ik*b(1,2))
-        der_oper(i,i) = 1+(ik)**2*b(2,2)-b(1,1)
+        der_oper(i,i-1) = -1/2*(2*b(1,1)/(hx**2)-2*ik*b(1,2)/hx)
+        der_oper(i,i+1) = -1/2*(2*b(1,1)/(hx**2)+2*ik*b(1,2)/hx)
+        der_oper(i,i) = 1-(ik)**2*b(2,2)+2*b(1,1)/(hx**2)
     enddo
 endfunction der_oper
 
@@ -208,8 +282,8 @@ endfunction gtilde
        tau = 0 !dimensionless temperature difference (dT/Tbar)
        tbar = 0.5 !average temperature
        umax = 1 !potential height
-       gm = 0.01 ! inverse friction coefficient. Essentially acts as dt for timestepping
-       kmult = 10 !Since we can't sample the full spring stretching direction, we need to cut it off somewhere
+       gm = 0.0001 ! inverse friction coefficient. Essentially acts as dt for timestepping
+       kmult = 4 !Since we can't sample the full spring stretching direction, we need to cut it off somewhere
        !This sets the cutoff at some multiple of the thermal length of the spring
 
        vals = (/lsmall,lbig,k,tau,tbar,umax,gm,kmult/)
@@ -236,8 +310,8 @@ endfunction gtilde
         term3(:,:) = 0
         b = barray()
         do i = 1,nx
-            !pyy(i+1,:) = comp2der(p(i+1,:),ny)/(hy*hy)
-            pyy(i,:) = spec2der(yvals(1),ymax,ny,p(i,:))
+            pyy(i,:) = comp2der(p(i,:),ny)/(hy*hy)
+            !pyy(i,:) = spec2der(yvals(1),ymax,ny,p(i,:))
         enddo
         do i = 1,ny
             pxx(:,i) = comp2der(p(:,i),nx)/(hx*hx)
@@ -246,8 +320,8 @@ endfunction gtilde
             px(:,i) = compder(p(:,i),nx)/hx
         enddo
         do i = 1,nx
-            !pxy(i+1,:) = compder(p(i+1,:),ny)/hy
-            pxy(i,:) = specder(yvals(1),ymax,ny,px(i,:))
+            pxy(i,:) = compder(p(i,:),ny)/hy
+            !pxy(i,:) = specder(yvals(1),ymax,ny,px(i,:))
         enddo
 
         term3 = b(1,1)*pxx+b(2,2)*pyy+2*b(1,2)*pxy
@@ -280,7 +354,8 @@ endfunction gtilde
         enddo
         
         do i = 1,nx
-            py(i,:) = specder(yvals(1),ymax,ny,p(i,:))
+            !py(i,:) = specder(yvals(1),ymax,ny,p(i,:))
+            py(i,:) = compder(p(i,:),ny)/hy
         enddo
         do i = 1,ny
             px(:,i) = compder(p(:,i),nx)/hx
