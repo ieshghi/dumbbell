@@ -492,7 +492,7 @@ contains
         implicit none
         real *8::x,y,k,diva
         k = consts(3)
-        diva = -2*consts(7)*(k+5.0d0/4*(upp(y+x/2)+upp(y-x/2)))
+        diva = 2*consts(7)*(k+1/2*(upp(y+x/2)+upp(y-x/2)))
     endfunction diva
 
     function upp(z)
@@ -537,7 +537,7 @@ contains
 
       um = uprime(y-x/2)
       up = uprime(y+x/2)
-      fx = -k*x-0.5*(up-um)
+      fx = +k*x-0.5*(up-um)
       fy = -up-um
       avec(1) = 2*fx*gm
       avec(2) = fy*gm/(2)
@@ -552,8 +552,8 @@ contains
       gm = consts(7)
 
       barray(1,1) = 4
-      barray(1,2) = tau
-      barray(2,1) = tau
+      barray(1,2) = tau/2
+      barray(2,1) = tau/2
       barray(2,2) = 1
       barray = (-1)*tbar*gm/(2)*barray
 
