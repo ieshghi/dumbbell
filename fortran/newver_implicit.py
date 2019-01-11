@@ -15,17 +15,17 @@ def runsim(nx,ny,nt):
     ls = lhs(p,g,pars)
     ax1 = ax(p[:,0],p[:,1],pars)
     dxax1 = dxax(p[:,0],p[:,1],pars)
-    #for i in range(nt):
-    i = 0
-    while (error>1e-12):
+    for i in range(nt):
+#    i = 0
+#    while (error>1e-10):
         psi_new = imp_tstep(p,g,pars,ls,psi,ax1,dxax1)
         error = max(abs(psi_new-psi))
 #        if i%1==0:
 #            psi_hist[:,j] = psi
 #            j = j+1
-        print(sum(abs(psi_new))-sum(abs(psi)),error)
+        print(sum(abs(psi_new)),sum(abs(psi_new))-sum(abs(psi)),error)
         psi = psi_new.copy()
-        i = i+1
+#        i = i+1
     return psi_hist,psi_i,psi,p
 
 def pinit(xg,yg):
@@ -78,6 +78,7 @@ def lhs(p,g,pars):
     ymax = pars[-6]
     n = p[:,0].size
     ax1 = ax(p[:,0],p[:,1],pars)
+    dxax1 = dxax(p[:,0],p[:,1],pars)
     ay1 = ay(p[:,0],p[:,1],pars)
     div = diva(p[:,0],p[:,1],pars)
     b = barray(pars)
@@ -90,23 +91,29 @@ def lhs(p,g,pars):
         ls[i,g[i,0]] = dt*ay1[i]/(2*dy)-dt*b[1,1]/(dy**2)
         ls[i,g[i,2]] = -dt*ay1[i]/(2*dy)-dt*b[1,1]/(dy**2)
         if g[i,1] == -1:
-            ls[i,i] = -3/(2*dx)
-            ls[i,g[i,3]] = 2/dx
-            ls[i,g[g[i,3],3]] = -1/(2*dx) 
+            ls[i,i] = -3/(2*dx)*(b[0,0] - ax1[i])
+            ls[i,g[i,3]] = 2/dx*(b[0,0] - ax1[i])
+            ls[i,g[g[i,3],3]] = -1/(2*dx)*(b[0,0] - ax1[i])
+                       
+            ls[i,i] = ls[i,i] - dxax1[i]
+            ls[i,g[i,0]] = -b[0,1]/(2*dy)
+            ls[i,g[i,2]] = b[0,1]/(2*dy)
         elif g[i,3] == -1:
-            ls[i,i] = 3/(2*dx)
-            ls[i,g[i,1]] = -2/dx
-            ls[i,g[g[i,3],1]] = 1/(2*dx)
+            ls[i,i] = 3/(2*dx)*(b[0,0] - ax1[i])
+            ls[i,g[i,1]] = -2/dx*(b[0,0] - ax1[i])
+            ls[i,g[g[i,1],1]] = 1/(2*dx)*(b[0,0] - ax1[i])
+
+            ls[i,i] = ls[i,i] - dxax1[i]
+            ls[i,g[i,0]] = -b[0,1]/(2*dy)
+            ls[i,g[i,2]] = b[0,1]/(2*dy)
         else:
             ls[i,g[i,3]] = dt*ax1[i]/(2*dx)-dt*b[0,0]/(dx**2)
             ls[i,g[i,1]] = -dt*ax1[i]/(2*dx)-dt*b[0,0]/(dx**2)
-            
             ls[i,g[g[i,3],0]] = dt*b[0,1]/(2*dx*dy)
             ls[i,g[g[i,1],2]] = dt*b[0,1]/(2*dx*dy)
-
             ls[i,g[g[i,3],2]] = -dt*b[0,1]/(2*dx*dy)
             ls[i,g[g[i,1],0]] = -dt*b[0,1]/(2*dx*dy)
-
+    print(linalg.det(ls))
     sls = spr.csr_matrix(ls)
     return sls
                     
@@ -117,7 +124,7 @@ def barray(pars):
 
 def consts():
     k = 1
-    tau = 0
+    tau = 0.1
     tbar = 1
     kmult = 3
     lsmall = 1
