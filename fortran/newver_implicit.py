@@ -21,7 +21,7 @@ def runsim(nx,ny,nt):
 #        if i%1==0:
 #            psi_hist[:,j] = psi
 #            j = j+1
-        print(sum(abs(psi_new)),error)
+        print(sum(abs(psi_new))-sum(abs(psi)),error)
         psi = psi_new.copy()
         i = i+1
     return psi_hist,psi_i,psi,p
@@ -168,7 +168,7 @@ def uprime(x,pars):
 def getbig(array):
     b = reshape(array,array.size)
     sort(b)
-    return b[0]
+    return b[-1]
 
 def specder(f,xmin,xmax,n,ax = 0):
     if ax == 1:
