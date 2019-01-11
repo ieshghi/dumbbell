@@ -492,7 +492,7 @@ contains
         implicit none
         real *8::x,y,k,diva
         k = consts(3)
-        diva = 2*consts(7)*(k+1/2*(upp(y+x/2)+upp(y-x/2)))
+        diva = 2*consts(7)*(k-1/2*(upp(y+x/2)+upp(y-x/2)))
     endfunction diva
 
     function upp(z)
