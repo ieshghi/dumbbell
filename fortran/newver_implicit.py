@@ -13,10 +13,12 @@ def runsim(nx,ny,nt):
 #    psi_hist[:,0] = psi
     error = 1
     ls = lhs(p,g,pars)
+    ax1 = ax(p[:,0],p[:,1],pars)
+    dxax1 = dxax(p[:,0],p[:,1],pars)
     #for i in range(nt):
     i = 0
     while (error>1e-12):
-        psi_new = imp_tstep(p,g,pars,ls,psi)
+        psi_new = imp_tstep(p,g,pars,ls,psi,ax1,dxax1)
         error = max(abs(psi_new-psi))
 #        if i%1==0:
 #            psi_hist[:,j] = psi
@@ -54,17 +56,15 @@ def find_dt(xgrid,ygrid,pars,dx,dy):
     print(dx,dy,dt)
     return dt
 
-def imp_tstep(p,g,pars,ls,psi):
-    rs = rhs(p,g,pars,psi)
+def imp_tstep(p,g,pars,ls,psi,ax1,dxax1):
+    rs = rhs(p,g,pars,psi,ax1,dxax1)
     return spsolve(ls,rs)
 
-def rhs(p,g,pars,psi):
+def rhs(p,g,pars,psi,ax1,dxax1):
     dx = pars[-3]
     dy = pars[-2]
     dt = pars[-1]
     b = barray(pars)
-    ax1 = ax(p[:,0],p[:,1],pars)
-    dxax1 = dxax(p[:,0],p[:,1],pars)
     rhs = psi
     ind = logical_or(g[:,1] == -1,g[:,3] == -1)
     rhs[ind] = 0#(b[0,1]*(psi[g[ind,0]]-psi[g[ind,2]])/(2*dy) + psi[ind]*dxax1[ind])/(b[0,0]-ax1[ind])
