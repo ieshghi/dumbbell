@@ -78,7 +78,7 @@ def lhs(p,g,pars):
     ymax = pars[-6]
     n = p[:,0].size
     ax1 = ax(p[:,0],p[:,1],pars)
-    dxax1 = dxax(p[:,0],p[:,1],pars)
+#    dxax1 = dxax(p[:,0],p[:,1],pars)
     ay1 = ay(p[:,0],p[:,1],pars)
     div = diva(p[:,0],p[:,1],pars)
     b = barray(pars)
@@ -91,21 +91,21 @@ def lhs(p,g,pars):
         ls[i,g[i,0]] = dt*ay1[i]/(2*dy)-dt*b[1,1]/(dy**2)
         ls[i,g[i,2]] = -dt*ay1[i]/(2*dy)-dt*b[1,1]/(dy**2)
         if g[i,1] == -1:
-            ls[i,i] = -3/(2*dx)*(b[0,0] - ax1[i])
-            ls[i,g[i,3]] = 2/dx*(b[0,0] - ax1[i])
-            ls[i,g[g[i,3],3]] = -1/(2*dx)*(b[0,0] - ax1[i])
+            ls[i,i] = -3/(2*dx)*(b[0,0])
+            ls[i,g[i,3]] = 2/dx*(b[0,0])
+            ls[i,g[g[i,3],3]] = -1/(2*dx)*(b[0,0])
                        
-            ls[i,i] = ls[i,i] - dxax1[i]
-            ls[i,g[i,0]] = -b[0,1]/(2*dy)
-            ls[i,g[i,2]] = b[0,1]/(2*dy)
+            ls[i,i] = ls[i,i] - ax1[i]
+            ls[i,g[i,0]] = b[0,1]/(2*dy)
+            ls[i,g[i,2]] = -b[0,1]/(2*dy)
         elif g[i,3] == -1:
-            ls[i,i] = 3/(2*dx)*(b[0,0] - ax1[i])
-            ls[i,g[i,1]] = -2/dx*(b[0,0] - ax1[i])
-            ls[i,g[g[i,1],1]] = 1/(2*dx)*(b[0,0] - ax1[i])
+            ls[i,i] = 3/(2*dx)*(b[0,0])
+            ls[i,g[i,1]] = -2/dx*(b[0,0])
+            ls[i,g[g[i,1],1]] = 1/(2*dx)*(b[0,0])
 
-            ls[i,i] = ls[i,i] - dxax1[i]
-            ls[i,g[i,0]] = -b[0,1]/(2*dy)
-            ls[i,g[i,2]] = b[0,1]/(2*dy)
+            ls[i,i] = ls[i,i] - ax1[i]
+            ls[i,g[i,0]] = b[0,1]/(2*dy)
+            ls[i,g[i,2]] = -b[0,1]/(2*dy)
         else:
             ls[i,g[i,3]] = dt*ax1[i]/(2*dx)-dt*b[0,0]/(dx**2)
             ls[i,g[i,1]] = -dt*ax1[i]/(2*dx)-dt*b[0,0]/(dx**2)
@@ -114,6 +114,7 @@ def lhs(p,g,pars):
             ls[i,g[g[i,3],2]] = -dt*b[0,1]/(2*dx*dy)
             ls[i,g[g[i,1],0]] = -dt*b[0,1]/(2*dx*dy)
     print(linalg.det(ls))
+    plt.imshow(ls)
     sls = spr.csr_matrix(ls)
     return sls
                     
@@ -124,7 +125,7 @@ def barray(pars):
 
 def consts():
     k = 1
-    tau = 0.1
+    tau = 0
     tbar = 1
     kmult = 3
     lsmall = 1

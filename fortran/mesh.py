@@ -14,24 +14,25 @@ def gencylmesh(nx,ny,lx,ly): #generates a mesh on a cylinder surface with nx poi
     p = zeros((np,2))
     g = zeros((np,4),dtype = int)
     
-    j = 0
     for i in range(np):
         p[i,0] = X1[i]
         p[i,1] = Y1[i]
         if (X1[i] == xvals[0]):
-            j = j+1
             g[i,1] = -1
+            g[i,3] = i+1
         elif (X1[i] == xvals[-1]):
-            j = j+1
             g[i,3] = -1
+            g[i,1] = i-1 
         else:
             g[i,1] = i-1 
             g[i,3] = i+1
 
         if Y1[i] == yvals[-1]:
             g[i,0] = i%nx
+            g[i,2] = i-nx
         elif Y1[i] == yvals[0]:
-            g[i,2] = Y1.size - (nx-i%10)
+            g[i,2] = Y1.size - (nx-i%nx)
+            g[i,0] = i+nx
         else:
             g[i,0] = i+nx
             g[i,2] = i-nx
