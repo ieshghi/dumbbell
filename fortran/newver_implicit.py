@@ -12,20 +12,19 @@ def runsim(nx,ny,nt):
     j = 0
 #    psi_hist[:,0] = psi
     error = 1
-    ls = lhs(p,g,pars)
-    ax1 = ax(p[:,0],p[:,1],pars)
-    dxax1 = dxax(p[:,0],p[:,1],pars)
-    for i in range(nt):
-#    i = 0
-#    while (error>1e-10):
-        psi_new = imp_tstep(p,g,pars,ls,psi,ax1,dxax1)
+    ls1 = lhs(p,g,pars,ifcrank = 1)
+    ls2 = lhs(p,g,pars,ifcrank = 2)
+#    ls = lhs(p,g,pars,ifcrank = 0)
+#    ls = preplhs(p,g,pars,ls)
+    ls1 = preplhs(p,g,pars,ls1)
+    i = 0
+    while error > 1e-10:
+#    for i in range(nt):
+        psi_new = imp_tstep(p,g,pars,ls1,psi,ls2)
         error = max(abs(psi_new-psi))
-#        if i%1==0:
-#            psi_hist[:,j] = psi
-#            j = j+1
-        print(sum(abs(psi_new)),sum(abs(psi_new))-sum(abs(psi)),error)
+        print(i,sum(abs(psi_new)),sum(abs(psi_new))-sum(abs(psi)),error)
         psi = psi_new.copy()
-#        i = i+1
+        i = i+1
     return psi_hist,psi_i,psi,p
 
 def pinit(xg,yg):
@@ -56,21 +55,23 @@ def find_dt(xgrid,ygrid,pars,dx,dy):
     print(dx,dy,dt)
     return dt
 
-def imp_tstep(p,g,pars,ls,psi,ax1,dxax1):
-    rs = rhs(p,g,pars,psi,ax1,dxax1)
-    return spsolve(ls,rs)
+def imp_tstep(p,g,pars,ls,psi,ls2 = 0):
+    rs = rhs(p,g,pars,psi,ls2)
+    pn = spsolve(ls,rs)
+    return pn
 
-def rhs(p,g,pars,psi,ax1,dxax1):
-    dx = pars[-3]
-    dy = pars[-2]
-    dt = pars[-1]
-    b = barray(pars)
-    rhs = psi
+def rhs(p,g,pars,psi,ls2):
+    if sum(ls2**2) == 0:
+        rhs = psi
+    else:
+        rhs = ls2.dot(psi)
+
     ind = logical_or(g[:,1] == -1,g[:,3] == -1)
     rhs[ind] = 0#(b[0,1]*(psi[g[ind,0]]-psi[g[ind,2]])/(2*dy) + psi[ind]*dxax1[ind])/(b[0,0]-ax1[ind])
     return rhs
 
-def lhs(p,g,pars):
+def preplhs(p,g,pars,ls_s):
+    ls = ls_s.toarray()
     dx = pars[-3]
     dy = pars[-2]
     dt = pars[-1]
@@ -78,19 +79,13 @@ def lhs(p,g,pars):
     ymax = pars[-6]
     n = p[:,0].size
     ax1 = ax(p[:,0],p[:,1],pars)
-#    dxax1 = dxax(p[:,0],p[:,1],pars)
     ay1 = ay(p[:,0],p[:,1],pars)
     div = diva(p[:,0],p[:,1],pars)
     b = barray(pars)
-    ls = zeros((n,n))
-
-    d = zeros((n))
-    d = d + 1 + dt*div + 2*dt*b[0,0]/(dx**2) + 2*dt*b[1,1]/(dy**2)
-    fill_diagonal(ls,d)
+ 
     for i in range(n):
-        ls[i,g[i,0]] = dt*ay1[i]/(2*dy)-dt*b[1,1]/(dy**2)
-        ls[i,g[i,2]] = -dt*ay1[i]/(2*dy)-dt*b[1,1]/(dy**2)
         if g[i,1] == -1:
+            ls[i,:] = 0
             ls[i,i] = -3/(2*dx)*(b[0,0])
             ls[i,g[i,3]] = 2/dx*(b[0,0])
             ls[i,g[g[i,3],3]] = -1/(2*dx)*(b[0,0])
@@ -99,6 +94,7 @@ def lhs(p,g,pars):
             ls[i,g[i,0]] = b[0,1]/(2*dy)
             ls[i,g[i,2]] = -b[0,1]/(2*dy)
         elif g[i,3] == -1:
+            ls[i,:] = 0
             ls[i,i] = 3/(2*dx)*(b[0,0])
             ls[i,g[i,1]] = -2/dx*(b[0,0])
             ls[i,g[g[i,1],1]] = 1/(2*dx)*(b[0,0])
@@ -106,15 +102,40 @@ def lhs(p,g,pars):
             ls[i,i] = ls[i,i] - ax1[i]
             ls[i,g[i,0]] = b[0,1]/(2*dy)
             ls[i,g[i,2]] = -b[0,1]/(2*dy)
-        else:
-            ls[i,g[i,3]] = dt*ax1[i]/(2*dx)-dt*b[0,0]/(dx**2)
-            ls[i,g[i,1]] = -dt*ax1[i]/(2*dx)-dt*b[0,0]/(dx**2)
-            ls[i,g[g[i,3],0]] = dt*b[0,1]/(2*dx*dy)
-            ls[i,g[g[i,1],2]] = dt*b[0,1]/(2*dx*dy)
-            ls[i,g[g[i,3],2]] = -dt*b[0,1]/(2*dx*dy)
-            ls[i,g[g[i,1],0]] = -dt*b[0,1]/(2*dx*dy)
-    print(linalg.det(ls))
-    plt.imshow(ls)
+    return spr.csr_matrix(ls)
+
+def lhs(p,g,pars,ifcrank = 0):
+    dx = pars[-3]
+    dy = pars[-2]
+    dt = pars[-1]
+    xmax = pars[-5]
+    ymax = pars[-6]
+    n = p[:,0].size
+    ax1 = ax(p[:,0],p[:,1],pars)
+    ay1 = ay(p[:,0],p[:,1],pars)
+    div = diva(p[:,0],p[:,1],pars)
+    b = barray(pars)
+    ls = zeros((n,n))
+
+    if ifcrank == 1:
+        dtc = dt/2
+    elif ifcrank == 2:
+        dtc = -dt/2
+    else:
+        dtc = dt
+
+    d = zeros((n))
+    d = d + 1 + dtc*div + 2*dtc*b[0,0]/(dx**2) + 2*dtc*b[1,1]/(dy**2)
+    fill_diagonal(ls,d)
+    for i in range(n):
+        ls[i,g[i,0]] = dtc*ay1[i]/(2*dy)-dtc*b[1,1]/(dy**2)
+        ls[i,g[i,2]] = -dtc*ay1[i]/(2*dy)-dtc*b[1,1]/(dy**2)
+        ls[i,g[i,3]] = dtc*ax1[i]/(2*dx)-dtc*b[0,0]/(dx**2)
+        ls[i,g[i,1]] = -dtc*ax1[i]/(2*dx)-dtc*b[0,0]/(dx**2)
+        ls[i,g[g[i,3],0]] = dtc*b[0,1]/(2*dx*dy)
+        ls[i,g[g[i,1],2]] = dtc*b[0,1]/(2*dx*dy)
+        ls[i,g[g[i,3],2]] = -dtc*b[0,1]/(2*dx*dy)
+        ls[i,g[g[i,1],0]] = -dtc*b[0,1]/(2*dx*dy)
     sls = spr.csr_matrix(ls)
     return sls
                     
