@@ -184,8 +184,8 @@ using NPZ
     end
 
     function gettscale(tmin)
-#        dts = LinRange(0,1,100);
-        dts = 1.;
+        dts = LinRange(0,1,100);
+#        dts = 1.;
         sl = zeros(100,1);
         t1 = tmin;
         t2 = tmin + dts;
@@ -272,11 +272,60 @@ using NPZ
     end
 
     function runsim()
+        maxtime = 10000;
+        timestep = 0.001;
+        nsteps = Int(maxtime/timestep);
+		pot0_t0,c = manypart_euler(20,1,0,timestep,nsteps,.1,.1,0,0)
+		pot0_t1,c = manypart_euler(20,1,1,timestep,nsteps,.1,1.1,0,0)
+		pot0_t2,c = manypart_euler(20,1,2,timestep,nsteps,.1,2.1,0,0)
+		pot0_t3,c = manypart_euler(20,1,3,timestep,nsteps,.1,3.1,0,0)
+		pot2_t0,c = manypart_euler(20,1,0,timestep,nsteps,.1,.1,0,2)
+		pot2_t1,c = manypart_euler(20,1,1,timestep,nsteps,.1,1.1,0,2)
+		pot2_t2,c = manypart_euler(20,1,2,timestep,nsteps,.1,2.1,0,2)
+		pot2_t3,c = manypart_euler(20,1,3,timestep,nsteps,.1,3.1,0,2)
+        npzwrite("./data/pot0_t0.npz",pot0_t0);
+        npzwrite("./data/pot0_t1.npz",pot0_t1);
+        npzwrite("./data/pot0_t2.npz",pot0_t2);
+        npzwrite("./data/pot0_t3.npz",pot0_t3);
+        npzwrite("./data/pot2_t0.npz",pot2_t0);
+        npzwrite("./data/pot2_t1.npz",pot2_t1);
+        npzwrite("./data/pot2_t2.npz",pot2_t2);
+        npzwrite("./data/pot2_t3.npz",pot2_t3);
+
+		sl_hotgrav_dt0 = getgrav(0,0,0.5,[0.0,.025])
+		sl_hotgrav_dt1 = getgrav(0,1,0.5,[0.0,.025])
+		sl_hotgrav_dt2 = getgrav(0,2,0.5,[0.0,.025])
+		sl_hotgrav_dt3 = getgrav(0,3,0.5,[0.0,.025])
+        npzwrite("./data/sl_hotgrav_dt0.npz",sl_hotgrav_dt0);
+        npzwrite("./data/sl_hotgrav_dt1.npz",sl_hotgrav_dt1);
+        npzwrite("./data/sl_hotgrav_dt2.npz",sl_hotgrav_dt2);
+        npzwrite("./data/sl_hotgrav_dt3.npz",sl_hotgrav_dt3);
+				
+		sl_coldgrav_dt0 = getgrav(0,0,0.05,[0.0,.2])
+		sl_coldgrav_dt1 = getgrav(0,1,0.05,[0.0,.2])
+		sl_coldgrav_dt2 = getgrav(0,2,0.05,[0.0,.2])
+		sl_coldgrav_dt3 = getgrav(0,3,0.05,[0.0,.2])
+        npzwrite("./data/sl_coldgrav_dt0.npz",sl_coldgrav_dt0);
+        npzwrite("./data/sl_coldgrav_dt1.npz",sl_coldgrav_dt1);
+        npzwrite("./data/sl_coldgrav_dt2.npz",sl_coldgrav_dt2);
+        npzwrite("./data/sl_coldgrav_dt3.npz",sl_coldgrav_dt3);
+
+		sl_cold_moregrav_dt0 = getgrav(0,0,0.05,[0.0,2.0])
+		sl_cold_moregrav_dt02 = getgrav(0,.2,0.05,[0.0,2.0])
+		sl_cold_moregrav_dt05 = getgrav(0,.5,0.05,[0.0,2.0])
+		sl_cold_moregrav_dt1 = getgrav(0.05,0.05,[0.0,2.0])
+        npzwrite("./data/sl_cold_moregrav_dt0.npz",sl_cold_moregrav_dt0);
+        npzwrite("./data/sl_cold_moregrav_dt1.npz",sl_cold_moregrav_dt1);
+        npzwrite("./data/sl_cold_moregrav_dt02.npz",sl_cold_moregrav_dt02);
+        npzwrite("./data/sl_cold_moregrav_dt05.npz",sl_cold_moregrav_dt05);
+
         sl_stiffspr = getk(LinRange(1,40,200));
         sl_softspr = getk(LinRange(.01,1,200));
-        
         npzwrite("./data/sl_stiffspr.npz",sl_stiffspr);
         npzwrite("./data/sl_softspr.npz",sl_softspr);
+
+		sl_lowt = gettscale(0.1)
+        npzwrite("./data/sl_lowt.npz",sl_lowt);
     end
 
 end
