@@ -2,7 +2,6 @@ module sim_dumbbell
 using DistributedArrays
 using Distributed
 using Statistics
-using NPZ
     function gpot(x1,x2,a,l)
         z1 = x1-floor(x1);
         z2 = x2-floor(x2);

@@ -2,7 +2,7 @@ module sim_dumbbell
 using DistributedArrays
 using Distributed
 using Statistics
-using NPZ
+using DelimitedFiles
     export rk_evolve,manypart
 
     function extpot(x,u,pottype = 0)
@@ -192,11 +192,43 @@ using NPZ
         tim = LinRange(0,10000000*0.001,10000000);
         for i = 1:size(t2,1);
             print("T1 = $(t1), T2 = $(t2[i]), finding drift.\n");
-            q,xs = manypart_euler(20,0,1,.001,10000000,t1[i],t2[i],0,0);
+            q,xs = manypart_euler(20,0,1,.001,10000000,t1,t2[i],0,2);
             sl[i],inter = linfit(tim[100:end],q[100:end,2]);
         end
         return sl
     end
+
+    function gettscale_grav(tmin,g)
+        dts = LinRange(0,1,100);
+#        dts = 1.;
+        sl = zeros(100,1);
+        t1 = tmin;
+        t2 = tmin + dts;
+        tim = LinRange(0,10000000*0.001,10000000);
+        for i = 1:size(t2,1);
+            print("T1 = $(t1), T2 = $(t2[i]), finding drift.\n");
+            q,xs = manypart_euler(20,0,1,.001,10000000,t1,t2[i],g,2);
+            sl[i],inter = linfit(tim[100:end],q[100:end,2]);
+        end
+        return sl
+    end
+
+    function gettscale_spring(tmin,kmult)
+        dts = LinRange(0,1,100);
+#        dts = 1.;
+        sl = zeros(100,1);
+        t1 = tmin;
+        t2 = tmin + dts;
+        tim = LinRange(0,10000000*0.001,10000000);
+        for i = 1:size(t2,1);
+            print("T1 = $(t1), T2 = $(t2[i]), finding drift.\n");
+            q,xs = manypart_euler(50,0,1,.001,10000000,t1,t2[i],0,2,0,kmult);
+            sl[i],inter = linfit(tim[100:end],q[100:end,2]);
+        end
+        return sl
+    end
+
+
 
     function getk(kvals)
         sl = zeros(size(kvals));
@@ -205,7 +237,7 @@ using NPZ
         tim = LinRange(0,10000000*0.001,10000000);
         for i = 1:size(kvals,1);
             print("T1 = $(t1), T2 = $(t2), k = $(kvals[i]).\n");
-            q,xs = manypart_euler(50,0,1,.001,10000000,t1,t2,0,0,0,kvals[i]);
+            q,xs = manypart_euler(50,0,1,.001,10000000,t1,t2,0,2,0,kvals[i]);
             sl[i],inter = linfit(tim[100:end],q[100:end,2]);
         end
         return sl
@@ -275,57 +307,42 @@ using NPZ
         maxtime = 10000;
         timestep = 0.001;
         nsteps = Int(maxtime/timestep);
-		pot0_t0,c = manypart_euler(20,1,0,timestep,nsteps,.1,.1,0,0)
-		pot0_t1,c = manypart_euler(20,1,1,timestep,nsteps,.1,1.1,0,0)
-		pot0_t2,c = manypart_euler(20,1,2,timestep,nsteps,.1,2.1,0,0)
-		pot0_t3,c = manypart_euler(20,1,3,timestep,nsteps,.1,3.1,0,0)
-		pot2_t0,c = manypart_euler(20,1,0,timestep,nsteps,.1,.1,0,2)
-		pot2_t1,c = manypart_euler(20,1,1,timestep,nsteps,.1,1.1,0,2)
-		pot2_t2,c = manypart_euler(20,1,2,timestep,nsteps,.1,2.1,0,2)
-		pot2_t3,c = manypart_euler(20,1,3,timestep,nsteps,.1,3.1,0,2)
-        npzwrite("./data/pot0_t0.npz",pot0_t0);
-        npzwrite("./data/pot0_t1.npz",pot0_t1);
-        npzwrite("./data/pot0_t2.npz",pot0_t2);
-        npzwrite("./data/pot0_t3.npz",pot0_t3);
-        npzwrite("./data/pot2_t0.npz",pot2_t0);
-        npzwrite("./data/pot2_t1.npz",pot2_t1);
-        npzwrite("./data/pot2_t2.npz",pot2_t2);
-        npzwrite("./data/pot2_t3.npz",pot2_t3);
+		#sl_hotgrav_dt0 = getgrav(2,0,0.5,[0.0,.025])
+		#sl_hotgrav_dt1 = getgrav(2,1,0.5,[0.0,.025])
+		#sl_hotgrav_dt2 = getgrav(2,2,0.5,[0.0,.025])
+		#sl_hotgrav_dt3 = getgrav(2,3,0.5,[0.0,.025])
+        #writedlm("./data/sl_hotgrav_dt0",sl_hotgrav_dt0);
+        #writedlm("./data/sl_hotgrav_dt1",sl_hotgrav_dt1);
+        #writedlm("./data/sl_hotgrav_dt2",sl_hotgrav_dt2);
+        #writedlm("./data/sl_hotgrav_dt3",sl_hotgrav_dt3);
+		#		
+		#sl_coldgrav_dt0 = getgrav(2,0,0.05,[0.0,.2])
+		#sl_coldgrav_dt1 = getgrav(2,1,0.05,[0.0,.2])
+		#sl_coldgrav_dt2 = getgrav(2,2,0.05,[0.0,.2])
+		#sl_coldgrav_dt3 = getgrav(2,3,0.05,[0.0,.2])
+        #writedlm("./data/sl_coldgrav_dt0",sl_coldgrav_dt0);
+        #writedlm("./data/sl_coldgrav_dt1",sl_coldgrav_dt1);
+        #writedlm("./data/sl_coldgrav_dt2",sl_coldgrav_dt2);
+        #writedlm("./data/sl_coldgrav_dt3",sl_coldgrav_dt3);
 
-		sl_hotgrav_dt0 = getgrav(0,0,0.5,[0.0,.025])
-		sl_hotgrav_dt1 = getgrav(0,1,0.5,[0.0,.025])
-		sl_hotgrav_dt2 = getgrav(0,2,0.5,[0.0,.025])
-		sl_hotgrav_dt3 = getgrav(0,3,0.5,[0.0,.025])
-        npzwrite("./data/sl_hotgrav_dt0.npz",sl_hotgrav_dt0);
-        npzwrite("./data/sl_hotgrav_dt1.npz",sl_hotgrav_dt1);
-        npzwrite("./data/sl_hotgrav_dt2.npz",sl_hotgrav_dt2);
-        npzwrite("./data/sl_hotgrav_dt3.npz",sl_hotgrav_dt3);
-				
-		sl_coldgrav_dt0 = getgrav(0,0,0.05,[0.0,.2])
-		sl_coldgrav_dt1 = getgrav(0,1,0.05,[0.0,.2])
-		sl_coldgrav_dt2 = getgrav(0,2,0.05,[0.0,.2])
-		sl_coldgrav_dt3 = getgrav(0,3,0.05,[0.0,.2])
-        npzwrite("./data/sl_coldgrav_dt0.npz",sl_coldgrav_dt0);
-        npzwrite("./data/sl_coldgrav_dt1.npz",sl_coldgrav_dt1);
-        npzwrite("./data/sl_coldgrav_dt2.npz",sl_coldgrav_dt2);
-        npzwrite("./data/sl_coldgrav_dt3.npz",sl_coldgrav_dt3);
+		#sl_cold_moregrav_dt0 = getgrav(2,0,0.05,[0.0,2.0])
+		#sl_cold_moregrav_dt02 = getgrav(2,.2,0.05,[0.0,2.0])
+		#sl_cold_moregrav_dt05 = getgrav(2,.5,0.05,[0.0,2.0])
+		#sl_cold_moregrav_dt1 = getgrav(2,1,0.05,[0.0,2.0])
+        #writedlm("./data/sl_cold_moregrav_dt0",sl_cold_moregrav_dt0);
+        #writedlm("./data/sl_cold_moregrav_dt1",sl_cold_moregrav_dt1);
+        #writedlm("./data/sl_cold_moregrav_dt02",sl_cold_moregrav_dt02);
+        #writedlm("./data/sl_cold_moregrav_dt05",sl_cold_moregrav_dt05);
 
-		sl_cold_moregrav_dt0 = getgrav(0,0,0.05,[0.0,2.0])
-		sl_cold_moregrav_dt02 = getgrav(0,.2,0.05,[0.0,2.0])
-		sl_cold_moregrav_dt05 = getgrav(0,.5,0.05,[0.0,2.0])
-		sl_cold_moregrav_dt1 = getgrav(0.05,0.05,[0.0,2.0])
-        npzwrite("./data/sl_cold_moregrav_dt0.npz",sl_cold_moregrav_dt0);
-        npzwrite("./data/sl_cold_moregrav_dt1.npz",sl_cold_moregrav_dt1);
-        npzwrite("./data/sl_cold_moregrav_dt02.npz",sl_cold_moregrav_dt02);
-        npzwrite("./data/sl_cold_moregrav_dt05.npz",sl_cold_moregrav_dt05);
+        #sl_stiffspr = getk(LinRange(1,40,200));
+        #sl_softspr = getk(LinRange(.01,1,200));
+        #writedlm("./data/sl_stiffspr",sl_stiffspr);
+        #writedlm("./data/sl_softspr",sl_softspr);
 
-        sl_stiffspr = getk(LinRange(1,40,200));
-        sl_softspr = getk(LinRange(.01,1,200));
-        npzwrite("./data/sl_stiffspr.npz",sl_stiffspr);
-        npzwrite("./data/sl_softspr.npz",sl_softspr);
-
-		sl_lowt = gettscale(0.1)
-        npzwrite("./data/sl_lowt.npz",sl_lowt);
+		#sl_lowt_gr = gettscale_grav(0.1,.01)
+        #writedlm("./data/sl_lowt_gr",sl_lowt_gr);
+		sl_lowt_stiff = gettscale_spring(0.1,35)
+        writedlm("./data/sl_lowt_stiff_parab",sl_lowt_stiff);
     end
 
 end

@@ -12,17 +12,19 @@ def runsim(nx,ny,nt):
     j = 0
 #    psi_hist[:,0] = psi
     error = 1
+    er2 = 0
     ls1 = lhs(p,g,pars,ifcrank = 1)
     ls2 = lhs(p,g,pars,ifcrank = 2)
 #    ls = lhs(p,g,pars,ifcrank = 0)
 #    ls = preplhs(p,g,pars,ls)
     ls1 = preplhs(p,g,pars,ls1)
     i = 0
-    while error > 1e-10:
+    while error > er2:
 #    for i in range(nt):
         psi_new = imp_tstep(p,g,pars,ls1,psi,ls2)
         error = max(abs(psi_new-psi))
         print(i,sum(abs(psi_new)),sum(abs(psi_new))-sum(abs(psi)),error)
+        er2 = sum(abs(psi_new))-sum(abs(psi))
         psi = psi_new.copy()
         i = i+1
     return psi_hist,psi_i,psi,p
