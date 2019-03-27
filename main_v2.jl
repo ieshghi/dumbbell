@@ -35,7 +35,8 @@ using Statistics
 
     function evolve(x1i,x2i,dt,nsteps,pars)
         delta = pars[4];
- 
+#        dt = dt*pars[6];        
+
         x = zeros(nsteps,2);
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
@@ -48,6 +49,27 @@ using Statistics
         end
         return x,t
     end
+
+    function iraj_watee(ipars)
+        t1 = ipars[1];
+        t2 = ipars[2];
+        u0 = ipars[3];
+        kbar = ipars[4];
+        lam = ipars[5];
+        lbar = ipars[6];
+        gam = ipars[7];    
+    
+        wpars = zeros(6);
+        wpars[1] = u0*(t1-t2)/(t1+t2); #delta
+        wpars[2] = 2*u0/(t1+t2); #alpha
+        wpars[3] = kbar*2*u0/(t1+t2); #kappa
+        wpars[4]  = lam;
+        wpars[5] = lbar;
+        wpars[6] = gam*lam^2/(2*(t1+t2));
+        return wpars
+     end
+    
+
 
     function manypart(N,x1i,x2i,dt,nsteps,pars)
         xs = @DArray[evolve(x1i,x2i,dt,nsteps,pars)[1] for j=1:N];
