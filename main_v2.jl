@@ -41,7 +41,8 @@ using Statistics
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
 
-        b = [sqrt(1+delta),sqrt(1-delta)]; 
+#        b = [sqrt(1+delta),sqrt(1-delta)]; 
+        b = [sqrt(2*dt*(1+delta)),sqrt(2*dt*(1-delta))]; 
         for i = 2:nsteps
             a = rhs(x[i-1,:],pars);
             dw = randn(2);
@@ -60,12 +61,12 @@ using Statistics
         gam = ipars[7];    
     
         wpars = zeros(6);
-        wpars[1] = u0*(t1-t2)/(t1+t2); #delta
+        wpars[4] = u0*(t1-t2)/(t1+t2); #delta
         wpars[2] = 2*u0/(t1+t2); #alpha
-        wpars[3] = kbar*2*u0/(t1+t2); #kappa
-        wpars[4]  = lam;
-        wpars[5] = lbar;
-        wpars[6] = gam*lam^2/(2*(t1+t2));
+        wpars[1] = kbar*2*u0/(t1+t2); #kappa
+#        wpars[4]  = lam;
+        wpars[3] = lbar;
+#        wpars[6] = gam*lam^2/(2*(t1+t2));
         return wpars
      end
     
