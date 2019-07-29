@@ -91,39 +91,6 @@ using DelimitedFiles
         return xdot(x1,x2,g,k,u,grav,pottype,l);
     end
 
-    function rkint(x,t,dt,grav,pottype,g,l,k) 
-        h = dt;
-        tm = t;
-        k1 = h.*rhs(x,tm,grav,pottype,g,t1,t2,l,k);
-        k2 = h.*rhs((x+k1*1/2),(tm+h*1/2),grav,pottype,g,t1,t2,l,k);
-        k3 = h.*rhs((x+k2*1/2),(tm+h*1/2),grav,pottype,g,t1,t2,l,k);
-        k4 = h.*rhs((x+k3),(tm+h),grav,pottype,g,t1,t2,l,k);
-        x += 1/6*(k1 + 2*k2 + 2*k3 + k4);
-        tm = tm+h;
-        ynew = x;
-        tnew = tm;
-        return ynew,tnew
-    end
-
-
-    function rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l,k)
-        x = zeros(nsteps,2);
-        t = zeros(nsteps);
-        x[1,:] = [x1i,x2i];
-
-        #                                   #
-        #             And Here              #
-        #                                   #
-
-        g = .1;
-        b = [sqrt(2*t1*dt/g),sqrt(2*t2*dt/g)];
-        for i = 2:nsteps
-            dw = randn(2);
-            x[i,:],t[i] = rkint(x[i-1,:],t[i-1],dt,grav,pottype,g,t1,t2,l,k) ;
-            x[i,:] += b.*dw;
-        end
-        return x,t
-    end
     function euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l,k)
         x = zeros(nsteps,2);
         t = zeros(nsteps);
@@ -143,33 +110,10 @@ using DelimitedFiles
         return x,t
     end
 
-    function manypart(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0,k=1)
-        xs = @DArray[rk_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l,k)[1] for j=1:N];
-        q = sum(xs)./N;
-        return q,xs
-    end
-
     function manypart_euler(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0,k=1)
         xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l,k)[1] for j=1:N];
         q = sum(xs)./N;
         return q,xs
-    end
-
-    function manypart_euler_dnv(N,x1i,x2i,dt,nsteps,t1,t2,grav,pottype = 0,l=0,k=1) #decorrelated noise variables
-        xs = @DArray[euler_evolve_sde(x1i,x2i,dt,nsteps,t1,t2,grav,pottype,l,k)[1] for j=1:N];
-        q = sum(xs)./N;
-        alpha = t2/(t1+t2);
-        beta = t1/(t1+t2);
-        
-        xa = q[:,1];
-        xb = q[:,2];
-
-        r = xa-xb;
-        R = alpha*xa+beta*xb;
-
-        q_out = hcat(r,R);
-
-        return q_out,xs
     end
 
     function linfit(xdat,ydat)
