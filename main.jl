@@ -272,24 +272,26 @@ using DelimitedFiles
         timestep = 0.001;
         
         #want to test dependencies at high kmult, so that the patching solution is correct:
-#        sl_dt4 = gettscale_spring(0.1,4);
-#        writedlm("./data/parab_strongk/sl_dt4",sl_dt4);
-#        sl_dt3 = gettscale_spring(0.1,3);
-#        writedlm("./data/parab_strongk/sl_dt3",sl_dt3);
-#        sl_dt2 = gettscale_spring(0.1,2);
-#        writedlm("./data/parab_strongk/sl_dt2",sl_dt2);
-#        sl_dt1 = gettscale_spring(0.1,1);
-#        writedlm("./data/parab_strongk/sl_dt1",sl_dt1);
-
-        sl_u5 = getuscale(5,5);
+        sl_dt20 = gettscale_spring(0.1,20);
+        writedlm("./data/parab_strongk/sl_dt20",sl_dt20);
+        sl_dt15 = gettscale_spring(0.1,15);
+        writedlm("./data/parab_strongk/sl_dt15",sl_dt15);
+        sl_dt10 = gettscale_spring(0.1,10);
+        writedlm("./data/parab_strongk/sl_dt10",sl_dt10);
+        sl_dt5 = gettscale_spring(0.1,5);
+        writedlm("./data/parab_strongk/sl_dt5",sl_dt5);
+        sl_dt1 = gettscale_spring(0.1,1);
+        writedlm("./data/parab_strongk/sl_dt1",sl_dt1);
+        
+        sl_u20 = getuscale_spring(0.1,20);
+        writedlm("./data/parab_strongk/sl_u20",sl_u20);
+        sl_u15 = getuscale_spring(0.1,15);
+        writedlm("./data/parab_strongk/sl_u15",sl_u15);
+        sl_u10 = getuscale_spring(0.1,10);
+        writedlm("./data/parab_strongk/sl_u10",sl_u10);
+        sl_u5 = getuscale_spring(0.1,5);
         writedlm("./data/parab_strongk/sl_u5",sl_u5);
-        sl_u4 = getuscale(5,4);
-        writedlm("./data/parab_strongk/sl_u4",sl_u4);
-        sl_u3 = getuscale(5,3);
-        writedlm("./data/parab_strongk/sl_u3",sl_u3);
-        sl_u2 = getuscale(5,2);
-        writedlm("./data/parab_strongk/sl_u2",sl_u2);
-        sl_u1 = getuscale(5,1);
+        sl_u1 = getuscale_spring(0.1,1);
         writedlm("./data/parab_strongk/sl_u1",sl_u1);
         
     end
