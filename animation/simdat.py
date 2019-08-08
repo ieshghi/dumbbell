@@ -9,7 +9,7 @@ def get_traj(path):
     y1 = vpot(x1)
     y2 = vpot(x2)
 
-    return x1[::500],y1[::500],x2[::500],y2[::500]
+    return x1[::100],y1[::100],x2[::100],y2[::100]
 
 def parabpot(x):
     u=1
