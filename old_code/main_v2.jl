@@ -35,13 +35,12 @@ using Statistics
 
     function evolve(x1i,x2i,dt,nsteps,pars)
         delta = pars[4];
-#        dt = dt*pars[6];        
+        dt = dt/pars[6];        
 
         x = zeros(nsteps,2);
         t = zeros(nsteps);
         x[1,:] = [x1i,x2i];
 
-#        b = [sqrt(1+delta),sqrt(1-delta)]; 
         b = [sqrt(2*dt*(1+delta)),sqrt(2*dt*(1-delta))]; 
         for i = 2:nsteps
             a = rhs(x[i-1,:],pars);
@@ -58,19 +57,18 @@ using Statistics
         kbar = ipars[4];
         lam = ipars[5];
         lbar = ipars[6];
-        gam = ipars[7];    
+        gam = ipars[7];
+        grav = ipars[8];
     
         wpars = zeros(6);
-        wpars[4] = u0*(t1-t2)/(t1+t2); #delta
+        wpars[1] = kbar*u0/(t1+t2); #kappa
         wpars[2] = 2*u0/(t1+t2); #alpha
-        wpars[1] = kbar*2*u0/(t1+t2); #kappa
-#        wpars[4]  = lam;
         wpars[3] = lbar;
-#        wpars[6] = gam*lam^2/(2*(t1+t2));
+        wpars[4] = u0*(t1-t2)/(t1+t2); #delta
+        wpars[5] = grav;
+        wpars[6] = gam*lam^2/(2*(t1+t2));
         return wpars
      end
-    
-
 
     function manypart(N,x1i,x2i,dt,nsteps,pars)
         xs = @DArray[evolve(x1i,x2i,dt,nsteps,pars)[1] for j=1:N];
@@ -118,13 +116,7 @@ using Statistics
     end
 
     function runsim()
-        stiff = heatmap(10,10);
-        soft = heatmap(10,0.1);
-        mid = heatmap(10,1);
-        
-        npzwrite("./data/stiffspr_v2.npz",stiff);
-        npzwrite("./data/softspr_v2.npz",soft);
-        npzwrite("./data/midspr_v2.npz",mid);
+
     end
 
 end
