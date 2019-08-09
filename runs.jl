@@ -40,14 +40,14 @@ end
 function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, dt = .001)
     parvals = LinRange(parmin,parmax,n);
     vvals = zeros(n);
-    data = Array{Run}(n);
     for i = 1:n
       pars[runpar] = parvals[i];
       t,x = sim.parallelcall(npart, [1,0], dt, nsteps, pars);
-      vvals[i] = linfit(t[100:end],x[100:end]);
+      s,b = linfit(t[100:end],x[100:end]);
+      vvals[i] = s;
     end
 
-    dir = string("~/Documents/code/dumbbell/data/",saveadd,".jld");
+    dir = string("/home/ieshghi/Documents/code/dumbbell/data/",saveadd,".jld");
     save(dir,"parnum",runpar,"parvals",parvals,"vvals",vvals);
 end
 
@@ -61,7 +61,7 @@ function savetrajs(name, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 1
       xvals[:,i] = x;
     end
 
-    dir = string("~/Documents/code/dumbbell/data/individual_paths/",name,".jld");
+    dir = string("/home/ieshghi/Documents/code/dumbbell/data/individual_paths/",name,".jld");
     save(dir,"t",t,"xvals",xvals,"parvals",parvals);
 end
 
