@@ -47,7 +47,7 @@ function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nste
       vvals[i] = s;
     end
 
-    dir = string("/home/ieshghi/Documents/code/dumbbell/data/",saveadd,".jld");
+    dir = string("/home/data/ie355/Documents/code/dumbbell/data/",saveadd,".jld");
     save(dir,"parnum",runpar,"parvals",parvals,"vvals",vvals);
 end
 
@@ -61,7 +61,7 @@ function savetrajs(name, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 1
       xvals[:,i] = x;
     end
 
-    dir = string("/home/ieshghi/Documents/code/dumbbell/data/individual_paths/",name,".jld");
+    dir = string("/home/data/ie355/Documents/code/dumbbell/data/individual_paths/",name,".jld");
     save(dir,"t",t,"xvals",xvals,"parvals",parvals);
 end
 
