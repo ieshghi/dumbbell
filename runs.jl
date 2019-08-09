@@ -67,24 +67,24 @@ end
 
 
 function currentset()
-  # First, get some trajectories
+  print("First, get some trajectories")
   savetrajs("basic",[0.1,0.1,1.0,0.1,0,2],2,0.1,3,3);
 
-  # Next, get some t-runs. First, set cold particle at very cold and vary hot
+  print("Next, get some t-runs. First, set cold particle at very cold and vary hot")
   singlevarrun("t_runs/colder",[0.1,0.1,1.0,0.1,0,2],2,0.1,1.0,40);
-  # Then, a t-run with a warmer cold particle
+  print("Then, a t-run with a warmer cold particle")
   singlevarrun("t_runs/warmer",[0.5,0.5,1.0,0.1,0,2],2,0.5,1.5,40);
 
-  # Then, a soft-k run with colder cold particle
+  print("Then, a soft-k run with colder cold particle")
   singlevarrun("k_runs/soft",[0.1,1.0,1.0,0.1,0,2],3,.05,1,100);
-  # Then, a stiff-k run with colder cold particle
+  print("Then, a stiff-k run with colder cold particle")
   singlevarrun("k_runs/stiff",[0.1,1.0,1.0,0.1,0,2],3,1.0,20,100);
 
-  # Then, a gravity run with small range and cold particle
+  print("Then, a gravity run with small range and cold particle")
   singlevarrun("grav_runs/small_cold",[0.1,1.0,1.0,0.1,0,2],5,0,2.0e-5,100);
-  # Then, a gravity run with small range and hot particle
+  print("Then, a gravity run with small range and hot particle")
   singlevarrun("grav_runs/small_hot",[0.5,1.0,1.0,0.1,0,2],5,0,2.5e-6,100);
-  # Then, a gravity run with large range and cold particle
+  print("Then, a gravity run with large range and cold particle")
   singlevarrun("grav_runs/large_cold",[0.1,1.0,1.0,0.1,0,2],5,0,.0002,100);
 
 end
