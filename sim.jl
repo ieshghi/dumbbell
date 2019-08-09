@@ -11,6 +11,8 @@ using Statistics
 # - gravity (g*(gamma*u0)^2/(lambda)^5)
 # - potential choice (1 = sawtooth, 2 = parabolas, ...)
 
+
+
 function make_unitless(t1,t2,k,gamma,u0,lam,l,grav,pot,dt) #If you don't like the unitless guys this converts them for you
   t1bar = t1/u0;
   t2bar = t2/u0;
@@ -24,7 +26,7 @@ function make_unitless(t1,t2,k,gamma,u0,lam,l,grav,pot,dt) #If you don't like th
   return pars,dtbar
 end
 
-function parallel_call(N,x0,dt,nsteps,pars,undersamp = 1) #simulates N particles in parallel and returns their average path
+function parallelcall(N,x0,dt,nsteps,pars,undersamp = 1) #simulates N particles in parallel and returns their average path
   x = @DArray[evolve(x0,dt,nsteps,pars)[1] for j = 1:N];
   x_av = sum(x)./N;
   x_out = mean(x_av,dims = 2);
@@ -37,8 +39,7 @@ function evolve(x0,dt,nsteps,pars) #Feed in unitless parameters here!
   t = zeros(nsteps);
   x[1,:] = x0;
   t[1] = 0;
-  
-  b = [sqrt(2*dt*pars[1]),sqrt(2*dt*pars[2])]; 
+  b = [sqrt(2*dt*pars[1]),sqrt(2*dt*pars[2])];
   dw = randn(2,nsteps);
   for i = 2:nsteps
    a = rhs(x[i-1,:],pars);
@@ -50,8 +51,7 @@ end
 
 function rhs(x,pars)
   lam = pars[4];
-  pot = pars[6]; 
-  
+  pot = pars[6];
   extforce = gpot.(x,lam,pot);
   k = pars[3];
   g = pars[5];
