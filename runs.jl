@@ -71,9 +71,9 @@ function currentset()
   savetrajs("basic",[0.1,0.1,1.0,0.1,0,2],2,0.1,3,3);
 
   print("Next, get some t-runs. First, set cold particle at very cold and vary hot")
-  singlevarrun("t_runs/colder",[0.1,0.1,1.0,0.1,0,2],2,0.1,1.0,40);
+  singlevarrun("temp_runs/colder",[0.1,0.1,1.0,0.1,0,2],2,0.1,1.0,40);
   print("Then, a t-run with a warmer cold particle")
-  singlevarrun("t_runs/warmer",[0.5,0.5,1.0,0.1,0,2],2,0.5,1.5,40);
+  singlevarrun("temp_runs/warmer",[0.5,0.5,1.0,0.1,0,2],2,0.5,1.5,40);
 
   print("Then, a soft-k run with colder cold particle")
   singlevarrun("k_runs/soft",[0.1,1.0,1.0,0.1,0,2],3,.05,1,100);
