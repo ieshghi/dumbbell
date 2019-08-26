@@ -57,6 +57,7 @@ function savetrajs(name, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 1
     xvals = zeros(npoints,n);
     t = zeros(npoints);
     for i = 1:n
+      pars[runpar] = parvals[i];
       t,x = sim.parallelcall(npart,[1,0],dt,nsteps,pars,undersamp);
       xvals[:,i] = x;
     end
