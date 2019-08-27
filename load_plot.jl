@@ -79,26 +79,26 @@ tight_layout();
 
 #Next, the temperature difference plot
 dat = load("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/stiffer.jld");
-temp = dat["parvals"].-0.1;
+temp = 2.*dat["parvals"].-0.1;
 trajs = -dat["vvals"];
 
 figure(4);
 plot(temp,trajs,".",label = "data");
-plot(temp,patching_soln.(0.1,(temp.+0.1),10,0.1));
+plot(temp,patching_soln.(0.2,(temp.+0.2),10,0.1)./2);
 
 xlabel(L"\delta T",fontsize = labelfont,fontname = fontnm)
 ylabel("v",fontsize = labelfont,fontname = fontnm)
-text(0,.0265,"\$ T_{min}  = 0.1\$",verticalalignment = "top",fontsize = legendfont)
+#text(0,.0265,"\$ T_{min}  = 0.1\$",verticalalignment = "top",fontsize = legendfont)
 legend(fontsize = legendfont,frameon = 0)
 tick_params(labelsize = labelfont)
 #xticks([1,10])
-yticks([0,.01,.02])
+#yticks([0,.01,.02])
 tight_layout();
 
 end
 
 function patching_soln(t1,t2,k,lam)
-	j = 1/(pi*erf(2/sqrt(t1+t2)))*2*(exp(-4/(t1+t2))*k*(t1^2-t2^2))*((lam-1)*sqrt((1+k*(t1+t2)*(lam-1)^2)/(16*t1*t2+16*k*t1*t2*(t1+t2)*(1-lam)^2+k^2*(t1+t2)^4*(1-lam)^4))+lam*sqrt((1+k*lam^2*(t1+t2))/(16*t1*t2+16*k*t1*t2*lam^2*(t1+t2)+k^2*(t1+t2)^4*lam^4)))
+	j = 1/(pi*erf(2/sqrt(t1+t2)))*2*(exp(-4/(t1+t2))*k*(t1-t2))*((lam-1)*sqrt((1+k*(lam-1)^2)/(16*t1*t2+16*k*t1*t2*(1-lam)^2+k^2*(t1+t2)^2*(1-lam)^4))+lam*sqrt((1+k*lam^2)/(16*t1*t2+16*k*t1*t2*lam^2+k^2*(t1+t2)^2*lam^4)))
 	return j
 end
 
