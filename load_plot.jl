@@ -14,7 +14,7 @@ function make_plots()
 
 #First, make the individual paths plot
 
-dat = load("/home/ieshghi/Documents/code/dumbbell/data/individual_paths/basic.jld");
+dat = load("/home/data/ie355/Documents/code/dumbbell/data/individual_paths/basic.jld");
 temp_vals = dat["parvals"].-0.1;
 time = dat["t"];
 trajs = -dat["xvals"];
@@ -34,7 +34,7 @@ yticks(0:400:maximum(trajs)+1)
 tight_layout();
 
 #Next, the large kappa plot
-dat = load("/home/ieshghi/Documents/code/dumbbell/data/k_runs/stiff.jld");
+dat = load("/home/data/ie355/Documents/code/dumbbell/data/k_runs/stiff.jld");
 kappa = dat["parvals"];
 trajs = -dat["vvals"];
 
@@ -56,7 +56,7 @@ minorticks_off()
 tight_layout();
 
 #Next, the small kappa plot
-dat = load("/home/ieshghi/Documents/code/dumbbell/data/k_runs/soft.jld");
+dat = load("/home/data/ie355/Documents/code/dumbbell/data/k_runs/soft.jld");
 kappa = dat["parvals"];
 trajs = -dat["vvals"];
 
@@ -78,13 +78,13 @@ minorticks_off()
 tight_layout();
 
 #Next, the temperature difference plot
-dat = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/colder.jld");
+dat = load("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/stiffer.jld");
 temp = dat["parvals"].-0.1;
 trajs = -dat["vvals"];
 
 figure(4);
 plot(temp,trajs,".",label = "data");
-plot(temp,patching_soln.(0.1,temp.+0.1,2,0.1));
+plot(temp,patching_soln.(0.1,(temp.+0.1),10,0.1));
 
 xlabel(L"\delta T",fontsize = labelfont,fontname = fontnm)
 ylabel("v",fontsize = labelfont,fontname = fontnm)
