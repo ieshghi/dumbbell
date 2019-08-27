@@ -11,8 +11,6 @@ using Statistics
 # - gravity (g*(gamma*u0)^2/(lambda)^5)
 # - potential choice (1 = sawtooth, 2 = parabolas, ...)
 
-
-
 function make_unitless(t1,t2,k,gamma,u0,lam,l,grav,pot,dt) #If you don't like the unitless guys this converts them for you
   t1bar = t1/u0;
   t2bar = t2/u0;
