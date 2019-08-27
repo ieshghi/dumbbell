@@ -75,8 +75,10 @@ function currentset()
   #singlevarrun("temp_runs/colder",[0.1,0.1,1.0,0.1,0,2],2,0.1,1.0,40);
   #print("Then, a t-run with a warmer cold particle")
   #singlevarrun("temp_runs/warmer",[0.5,0.5,1.0,0.1,0,2],2,0.5,1.5,40);
-  print("And then a t-run with a stiffer spring, where our theory should be better")
-  singlevarrun("temp_runs/stiffer",[0.1,0.1,10.0,0.1,0,2],2,0.1,1.0,40);
+  #print("And then a t-run with a stiffer spring, where our theory should be better")
+  #singlevarrun("temp_runs/stiffer",[0.1,0.1,10.0,0.1,0,2],2,0.1,1.0,40);
+  print("And then a t-run with a stifferer spring, where our theory should be better")
+  singlevarrun("temp_runs/stifferer",[0.1,0.1,20.0,0.1,0,2],2,0.1,1.0,40);
 
   #print("Then, a soft-k run with colder cold particle")
   #singlevarrun("k_runs/soft",[0.1,1.0,1.0,0.1,0,2],3,.05,1,100);
