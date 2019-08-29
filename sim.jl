@@ -8,7 +8,7 @@ using Statistics
 # - T_2 (T_2 / U_0)
 # - k (k*l^2/U_0)
 # - lambda (lambda/l)
-# - gravity (g*(gamma*u0)^2/(lambda)^5)
+# - gravity (g/(u0/gamma)^2/(l))
 # - potential choice (1 = sawtooth, 2 = parabolas, ...)
 
 function make_unitless(t1,t2,k,gamma,u0,lam,l,grav,pot,dt) #If you don't like the unitless guys this converts them for you
@@ -16,7 +16,7 @@ function make_unitless(t1,t2,k,gamma,u0,lam,l,grav,pot,dt) #If you don't like th
   t2bar = t2/u0;
   kbar = k*l^2/u0;
   lambar = lam/l;
-  gravbar = grav*(gamma*u0)^2/(lam)^5;
+  gravbar = grav/((gamma/u0)^2/(l));
 
   pars = [t1bar,t2bar,kbar,lambar,gravbar,pot];
   dtbar = dt*u0/(gamma*l^2);

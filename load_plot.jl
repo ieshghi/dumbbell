@@ -78,13 +78,27 @@ minorticks_off()
 tight_layout();
 
 #Next, the temperature difference plot
-dat = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/stiffer.jld");
-temp = dat["parvals"].-0.1;
-trajs = -dat["vvals"];
+dat1 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/colder.jld");
+dat2 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/stiffer.jld");
+dat3 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/stifferer.jld");
+dat4 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/stiffer_smalltime.jld");
+temp1 = dat1["parvals"].-0.1;
+temp2 = dat2["parvals"].-0.1;
+temp3 = dat3["parvals"].-0.1;
+temp4 = dat4["parvals"].-0.1;
+trajs1 = -dat1["vvals"];
+trajs2 = -dat2["vvals"];
+trajs3 = -dat3["vvals"];
+trajs4 = -dat4["vvals"];
 
 figure(4);
-plot(temp,trajs,".",label = "data");
-plot(temp,patching_soln.(0.1,(temp.+0.1),10,0.1));
+plot(temp1,trajs1,".",label = L"\kappa = 1");
+plot(temp2,trajs2,".",label = L"\kappa = 10");
+plot(temp3,trajs3,".",label = L"\kappa = 20");
+plot(temp4,trajs4,".",label = "\$\\kappa = 10,\\Delta t\$ smaller");
+plot(temp1,patching_soln.(0.1,(temp1.+0.1),1,0.1));
+plot(temp2,patching_soln.(0.1,(temp2.+0.1),10,0.1));
+plot(temp3,patching_soln.(0.1,(temp3.+0.1),20,0.1));
 
 xlabel(L"\delta T",fontsize = labelfont,fontname = fontnm)
 ylabel("v",fontsize = labelfont,fontname = fontnm)
@@ -98,7 +112,6 @@ tight_layout();
 end
 
 function patching_soln(t1,t2,k,lam)
-	k = k*(t1+t2)/2
 	j = 1/(pi*erf(2/sqrt(t1+t2)))*2*(exp(-4/(t1+t2))*k*(t1-t2))*((lam-1)*sqrt((1+k*(lam-1)^2)/(16*t1*t2+16*k*t1*t2*(1-lam)^2+k^2*(t1+t2)^2*(1-lam)^4))+lam*sqrt((1+k*lam^2)/(16*t1*t2+16*k*t1*t2*lam^2+k^2*(t1+t2)^2*lam^4)))
 	return j
 end
