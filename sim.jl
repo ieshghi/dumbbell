@@ -16,7 +16,7 @@ function make_unitless(t1,t2,k,gamma,u0,lam,l,grav,pot,dt) #If you don't like th
   t2bar = t2/u0;
   kbar = k*l^2/u0;
   lambar = lam/l;
-  gravbar = grav/((gamma/u0)^2/(l));
+  gravbar = grav/(u0/(gamma*lambda)); #gravity is basically just imposing a speed
 
   pars = [t1bar,t2bar,kbar,lambar,gravbar,pot];
   dtbar = dt*u0/(gamma*l^2);
