@@ -77,8 +77,8 @@ function currentset()
   #singlevarrun("temp_runs/warmer",[0.5,0.5,1.0,0.1,0,2],2,0.5,1.5,40);
   #print("And then a t-run with a stiffer spring, where our theory should be better")
   #singlevarrun("temp_runs/stiffer",[0.1,0.1,10.0,0.1,0,2],2,0.1,1.0,40);
-  print("And then a t-run with a stifferer spring, where our theory should be better")
-  singlevarrun("temp_runs/stifferer",[0.1,0.1,20.0,0.1,0,2],2,0.1,1.0,40);
+  #print("And then a t-run with a stifferer spring, where our theory should be better")
+  #singlevarrun("temp_runs/stifferer",[0.1,0.1,20.0,0.1,0,2],2,0.1,1.0,40);
 
   #print("Then, a soft-k run with colder cold particle")
   #singlevarrun("k_runs/soft",[0.1,1.0,1.0,0.1,0,2],3,.05,1,100);
@@ -101,6 +101,14 @@ function currentset()
   #singlevarrun("grav_runs/large_cold_dt2",[0.1,2.1,1.0,0.1,0,2],5,0,8,100);
   #singlevarrun("grav_runs/large_cold_dt3",[0.1,3.1,1.0,0.1,0,2],5,0,8,100);
 
+  print("A few t-runs with large k-values")
+  singlevarrun("temp_runs/k30",[0.1,0.1,30,0.1,0,2],2,0.1,1.0,40);
+  singlevarrun("temp_runs/k50",[0.1,0.1,50,0.1,0,2],2,0.1,1.0,40,10,10^8,.0001,1000); #take smaller timesteps and undersample... 
+  singlevarrun("temp_runs/k70",[0.1,0.1,70,0.1,0,2],2,0.1,1.0,40,10,10^8,.0001,1000);
+  singlevarrun("temp_runs/k100",[0.1,0.1,100,0.1,0,2],2,0.1,1.0,40,10,10^8,.0001,1000);
+  
+  print("\n one t-run which goes much further in k")
+  singlevarrun("temp_runs/k30_bigt",[0.1,0.1,30,0.1,0,2],2,0.1,5.0,40);
 end
 
 end
