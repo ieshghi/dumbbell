@@ -33,7 +33,7 @@ function parallelcall(N,x0,dt,nsteps,pars,undersamp = 1) #simulates N particles 
 end
 
 function evolve(x0,dt,nsteps,pars,undersamp) #Feed in unitless parameters here!
-  nkeep = nsteps/undersamp;
+  nkeep = Int(nsteps/undersamp);
   x = zeros(nkeep,2);
   t = zeros(nkeep);
   x[1,:] = x0;
