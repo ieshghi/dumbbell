@@ -37,12 +37,12 @@ end
 #  end
 #end
 
-function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, dt = .001)
+function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, dt = .001,undersamp = 100)
     parvals = LinRange(parmin,parmax,n);
     vvals = zeros(n);
     for i = 1:n
       pars[runpar] = parvals[i];
-      t,x = sim.parallelcall(npart, [1,0], dt, nsteps, pars);
+      t,x = sim.parallelcall(npart, [1,0], dt, nsteps, pars,undersamp);
       s,b = linfit(t[100:end],x[100:end]);
       vvals[i] = s;
     end
