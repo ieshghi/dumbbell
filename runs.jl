@@ -37,7 +37,7 @@ end
 #  end
 #end
 
-function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, dt = .001,undersamp = 100)
+function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, DT = .0001,undersamp = 100)
     parvals = LinRange(parmin,parmax,n);
     vvals = zeros(n);
     for i = 1:n
@@ -103,9 +103,9 @@ function currentset()
 
   print("A few t-runs with large k-values")
   singlevarrun("temp_runs/k30",[0.1,0.1,30,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k50",[0.1,0.1,50,0.1,0,2],2,0.1,1.0,40,10,10^8,.0001,1000); #take smaller timesteps and undersample... 
-  singlevarrun("temp_runs/k70",[0.1,0.1,70,0.1,0,2],2,0.1,1.0,40,10,10^8,.0001,1000);
-  singlevarrun("temp_runs/k100",[0.1,0.1,100,0.1,0,2],2,0.1,1.0,40,10,10^8,.0001,1000);
+  singlevarrun("temp_runs/k50",[0.1,0.1,50,0.1,0,2],2,0.1,1.0,40); #take smaller timesteps and undersample... 
+  singlevarrun("temp_runs/k70",[0.1,0.1,70,0.1,0,2],2,0.1,1.0,40);
+  singlevarrun("temp_runs/k100",[0.1,0.1,100,0.1,0,2],2,0.1,1.0,40);
   
   print("\n one t-run which goes much further in k")
   singlevarrun("temp_runs/k30_bigt",[0.1,0.1,30,0.1,0,2],2,0.1,5.0,40);
