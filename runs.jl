@@ -85,11 +85,11 @@ function currentset()
   #print("Then, a stiff-k run with colder cold particle")
   #singlevarrun("k_runs/stiff",[0.1,1.0,1.0,0.1,0,2],3,1.0,20,100);
 
-  #print("Then, a gravity run with small range and cold particle")
-  #singlevarrun("grav_runs/small_cold_dt0",[0.1,0.1,1.0,0.1,0,2],5,0,0.8,100);
-  #singlevarrun("grav_runs/small_cold_dt1",[0.1,1.1,1.0,0.1,0,2],5,0,0.8,100);
-  #singlevarrun("grav_runs/small_cold_dt2",[0.1,2.1,1.0,0.1,0,2],5,0,0.8,100);
-  #singlevarrun("grav_runs/small_cold_dt3",[0.1,3.1,1.0,0.1,0,2],5,0,0.8,100);
+  print("Then, a gravity run with small range and cold particle")
+  singlevarrun("grav_runs/small_cold_dt0",[0.1,0.1,1.0,0.1,0,2],5,0,1.5,100);
+  #singlevarrun("grav_runs/small_cold_dt1",[0.1,1.1,1.0,0.1,0,2],5,0,1.5,100);
+  #singlevarrun("grav_runs/small_cold_dt2",[0.1,2.1,1.0,0.1,0,2],5,0,1.5,100);
+  #singlevarrun("grav_runs/small_cold_dt3",[0.1,3.1,1.0,0.1,0,2],5,0,1.5,100);
   #print("Then, a gravity run with small range and hot particle")
   #singlevarrun("grav_runs/small_hot_dt0",[0.5,0.5,1.0,0.1,0,2],5,0,.01,100);
   #singlevarrun("grav_runs/small_hot_dt1",[0.5,1.5,1.0,0.1,0,2],5,0,.01,100);
@@ -101,14 +101,14 @@ function currentset()
   #singlevarrun("grav_runs/large_cold_dt2",[0.1,2.1,1.0,0.1,0,2],5,0,8,100);
   #singlevarrun("grav_runs/large_cold_dt3",[0.1,3.1,1.0,0.1,0,2],5,0,8,100);
 
-  print("A few t-runs with large k-values")
-  singlevarrun("temp_runs/k30",[0.1,0.1,30,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k50",[0.1,0.1,50,0.1,0,2],2,0.1,1.0,40); #take smaller timesteps and undersample... 
-  singlevarrun("temp_runs/k70",[0.1,0.1,70,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k100",[0.1,0.1,100,0.1,0,2],2,0.1,1.0,40);
-  
-  print("\n one t-run which goes much further in k")
-  singlevarrun("temp_runs/k30_bigt",[0.1,0.1,30,0.1,0,2],2,0.1,5.0,40);
+  #print("A few t-runs with large k-values")
+  #singlevarrun("temp_runs/k30",[0.1,0.1,30,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k50",[0.1,0.1,50,0.1,0,2],2,0.1,1.0,40); #take smaller timesteps and undersample... 
+  #singlevarrun("temp_runs/k70",[0.1,0.1,70,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k100",[0.1,0.1,100,0.1,0,2],2,0.1,1.0,40);
+  #
+  #print("\n one t-run which goes much further in k")
+  #singlevarrun("temp_runs/k30_bigt",[0.1,0.1,30,0.1,0,2],2,0.1,5.0,40);
 end
 
 end
