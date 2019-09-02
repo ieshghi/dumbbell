@@ -37,7 +37,7 @@ end
 #  end
 #end
 
-function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, DT = .0001,undersamp = 100)
+function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, dt = .0001,undersamp = 100)
     parvals = LinRange(parmin,parmax,n);
     vvals = zeros(n);
     for i = 1:n
