@@ -24,15 +24,15 @@ function make_unitless(t1,t2,k,gamma,u0,lam,l,grav,pot,dt) #If you don't like th
   return pars,dtbar
 end
 
-function parallelcall(N,x0,dt,nsteps,pars,undersamp = 1) #simulates N particles in parallel and returns their average path
-  x = @DArray[evolve(x0,dt,nsteps,pars,undersamp)[1] for j = 1:N];
+function parallelcall(N,x0,dt,nsteps,pars,undersamp = 1,coupling = [1,1]) #simulates N particles in parallel and returns their average path
+  x = @DArray[evolve(x0,dt,nsteps,pars,undersamp,coupling)[1] for j = 1:N];
   x_av = sum(x)./N;
   x_out = mean(x_av,dims = 2);
   t = LinRange(0,dt*nsteps,length(x_out));
   return t[1:end],x_out[1:end] #use undersamp if you want to plot subset of points
 end
 
-function evolve(x0,dt,nsteps,pars,undersamp) #Feed in unitless parameters here!
+function evolve(x0,dt,nsteps,pars,undersamp,coupling) #Feed in unitless parameters here!
   nkeep = Int(nsteps/undersamp);
   x = zeros(nkeep,2);
   t = zeros(nkeep);
@@ -43,7 +43,7 @@ function evolve(x0,dt,nsteps,pars,undersamp) #Feed in unitless parameters here!
   x_curr = x[1,:];
   j = 1;  
   for i = 2:nsteps
-   a = rhs(x_curr,pars);
+   a = rhs(x_curr,pars,coupling);
    x_curr += a*dt + b.*dw[:,i];
    if mod(i-1,undersamp)==0
        j +=1;
@@ -54,10 +54,10 @@ function evolve(x0,dt,nsteps,pars,undersamp) #Feed in unitless parameters here!
   return x,t
 end
 
-function rhs(x,pars)
+function rhs(x,pars,coupling)
   lam = pars[4];
   pot = pars[6];
-  extforce = gpot.(x,lam,pot);
+  extforce = coupling.*(gpot.(x,lam,pot));
   k = pars[3];
   g = pars[5];
   sprforce = [k*(x[1]-x[2]),-k*(x[1]-x[2])];

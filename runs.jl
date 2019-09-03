@@ -37,7 +37,7 @@ end
 #  end
 #end
 
-function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, dt = .0001,undersamp = 100)
+function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, dt = .001,undersamp = 100)
     parvals = LinRange(parmin,parmax,n);
     vvals = zeros(n);
     for i = 1:n
@@ -50,6 +50,21 @@ function singlevarrun(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nste
     dir = string("/home/data/ie355/Documents/code/dumbbell/data/",saveadd,".jld");
     save(dir,"parnum",runpar,"parvals",parvals,"vvals",vvals);
 end
+
+function singlevar_dec_run(saveadd, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, dt = .001,undersamp = 100) #Decouple particle 2
+    parvals = LinRange(parmin,parmax,n);
+    vvals = zeros(n);
+    for i = 1:n
+      pars[runpar] = parvals[i];
+      t,x = sim.parallelcall(npart, [1,0], dt, nsteps, pars,undersamp,[1,0]);
+      s,b = linfit(t[100:end],x[100:end]);
+      vvals[i] = s;
+    end
+
+    dir = string("/home/data/ie355/Documents/code/dumbbell/data/",saveadd,".jld");
+    save(dir,"parnum",runpar,"parvals",parvals,"vvals",vvals);
+end
+
 
 function savetrajs(name, pars, runpar, parmin, parmax, n, npart = 10, nsteps = 10^7, dt = .001, undersamp = 100)
     parvals = LinRange(parmin,parmax,n);
