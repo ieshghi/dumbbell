@@ -86,20 +86,20 @@ function currentset()
   #singlevarrun("k_runs/stiff",[0.1,1.0,1.0,0.1,0,2],3,1.0,20,100);
 
   print("Then, a gravity run with small range and cold particle")
-  singlevarrun("grav_runs/small_cold_dt0",[0.1,0.1,1.0,0.1,0,2],5,0,1.5,100);
-  singlevarrun("grav_runs/small_cold_dt1",[0.1,1.1,1.0,0.1,0,2],5,0,1.5,100);
-  singlevarrun("grav_runs/small_cold_dt2",[0.1,2.1,1.0,0.1,0,2],5,0,1.5,100);
-  singlevarrun("grav_runs/small_cold_dt3",[0.1,3.1,1.0,0.1,0,2],5,0,1.5,100);
+  singlevarrun("grav_runs/small_cold_dt0",[0.1,0.1,1.0,0.9,0,2],5,0,1.5,50);
+  singlevarrun("grav_runs/small_cold_dt1",[0.1,1.1,1.0,0.9,0,2],5,0,1.5,50);
+  singlevarrun("grav_runs/small_cold_dt2",[0.1,2.1,1.0,0.9,0,2],5,0,1.5,50);
+  singlevarrun("grav_runs/small_cold_dt3",[0.1,3.1,1.0,0.9,0,2],5,0,1.5,50);
   #print("Then, a gravity run with small range and hot particle")
   #singlevarrun("grav_runs/small_hot_dt0",[0.5,0.5,1.0,0.1,0,2],5,0,.01,100);
   #singlevarrun("grav_runs/small_hot_dt1",[0.5,1.5,1.0,0.1,0,2],5,0,.01,100);
   #singlevarrun("grav_runs/small_hot_dt2",[0.5,2.5,1.0,0.1,0,2],5,0,.01,100);
   #singlevarrun("grav_runs/small_hot_dt3",[0.5,3.5,1.0,0.1,0,2],5,0,.01,100);
   print("Then, a gravity run with large range and cold particle")
-  singlevarrun("grav_runs/larger_cold_dt0",[0.1,.1,1.0,0.1,0,2],5,0,80,100);
-  #singlevarrun("grav_runs/large_cold_dt1",[0.1,1.1,1.0,0.1,0,2],5,0,8,100);
-  #singlevarrun("grav_runs/large_cold_dt2",[0.1,2.1,1.0,0.1,0,2],5,0,8,100);
-  #singlevarrun("grav_runs/large_cold_dt3",[0.1,3.1,1.0,0.1,0,2],5,0,8,100);
+  singlevarrun("grav_runs/larger_cold_dt0",[0.1,.1,1.0,0.9,0,2],5,0,50,50);
+  singlevarrun("grav_runs/larger_cold_dt1",[0.1,1.1,1.0,0.9,0,2],5,0,50,50);
+  singlevarrun("grav_runs/larger_cold_dt2",[0.1,2.1,1.0,0.9,0,2],5,0,50,50);
+  singlevarrun("grav_runs/larger_cold_dt3",[0.1,3.1,1.0,0.9,0,2],5,0,50,50);
 
   #print("A few t-runs with large k-values")
   #singlevarrun("temp_runs/k30",[0.1,0.1,30,0.1,0,2],2,0.1,1.0,40);
