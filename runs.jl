@@ -124,6 +124,10 @@ function currentset()
   #
   #print("\n one t-run which goes much further in k")
   #singlevarrun("temp_runs/k30_bigt",[0.1,0.1,30,0.1,0,2],2,0.1,5.0,40);
+
+  print("A t-run with decoupled hot particle")
+  singlevar_dec_run("temp_runs/decoup_k1",[0.1,0.1,1.0,0.1,0,2],2,0.1,1.0,40);
+
 end
 
 end
