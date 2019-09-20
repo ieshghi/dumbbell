@@ -121,16 +121,35 @@ function currentset()
   #singlevarrun("temp_runs/k50",[0.1,0.1,50,0.1,0,2],2,0.1,1.0,40); #take smaller timesteps and undersample... 
   #singlevarrun("temp_runs/k70",[0.1,0.1,70,0.1,0,2],2,0.1,1.0,40);
   #singlevarrun("temp_runs/k100",[0.1,0.1,100,0.1,0,2],2,0.1,1.0,40);
+  singlevarrun("temp_runs/k1",[0.1,0.1,1,0.1,0,2],2,0.1,1.0,40);
+  singlevarrun("temp_runs/k2",[0.1,0.1,2,0.1,0,2],2,0.1,1.0,40); #take smaller timesteps and undersample... 
+  singlevarrun("temp_runs/k5",[0.1,0.1,5,0.1,0,2],2,0.1,1.0,40);
+  singlevarrun("temp_runs/k10",[0.1,0.1,10,0.1,0,2],2,0.1,1.0,40);
+  
+
+  #print("A few t-runs with t0=0")
+  #singlevarrun("temp_runs/k1_t0",[0,0.1,1,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k2_t0",[0,0.1,2,0.1,0,2],2,0.1,1.0,40); #take smaller timesteps and undersample... 
+  #singlevarrun("temp_runs/k5_t0",[0,0.1,5,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k10_t0",[0,0.1,10,0.1,0,2],2,0.1,1.0,40);
+  singlevarrun("temp_runs/k30_t0",[0,0.1,10,0.1,0,2],2,0.1,1.0,40);
+  singlevarrun("temp_runs/k50_t0",[0,0.1,10,0.1,0,2],2,0.1,1.0,40);
+  singlevarrun("temp_runs/k70_t0",[0,0.1,10,0.1,0,2],2,0.1,1.0,40);
+  
   #
   #print("\n one t-run which goes much further in k")
   #singlevarrun("temp_runs/k30_bigt",[0.1,0.1,30,0.1,0,2],2,0.1,5.0,40);
 
   print("A t-run with decoupled hot particle")
   #singlevar_dec_run("temp_runs/decoup_k1",[0.1,0.1,1.0,0.1,0,2],2,0.1,1.0,40);
-  singlevar_dec_run("temp_runs/decoup_k1_t0",[0,0.1,1.0,0.1,0,2],2,0.1,1.0,40);
-  singlevar_dec_run("temp_runs/decoup_k2_t0",[0,0.1,2.0,0.1,0,2],2,0.1,1.0,40);
-  singlevar_dec_run("temp_runs/decoup_k5_t0",[0,0.1,5.0,0.1,0,2],2,0.1,1.0,40);
-  singlevar_dec_run("temp_runs/decoup_k10_t0",[0,0.1,10.0,0.1,0,2],2,0.1,1.0,40);
+  singlevar_dec_run("temp_runs/decoup_k2",[0.1,0.1,2,0.1,0,2],2,0.1,1.0,40);
+  singlevar_dec_run("temp_runs/decoup_k5",[0.1,0.1,5,0.1,0,2],2,0.1,1.0,40);
+  singlevar_dec_run("temp_runs/decoup_k10",[0.1,0.1,10,0.1,0,2],2,0.1,1.0,40);
+
+  #singlevar_dec_run("temp_runs/decoup_k1_t0",[0,0.1,1.0,0.1,0,2],2,0.1,1.0,40);
+  #singlevar_dec_run("temp_runs/decoup_k2_t0",[0,0.1,2.0,0.1,0,2],2,0.1,1.0,40);
+  #singlevar_dec_run("temp_runs/decoup_k5_t0",[0,0.1,5.0,0.1,0,2],2,0.1,1.0,40);
+  #singlevar_dec_run("temp_runs/decoup_k10_t0",[0,0.1,10.0,0.1,0,2],2,0.1,1.0,40);
 
 end
 

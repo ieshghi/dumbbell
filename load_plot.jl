@@ -15,7 +15,7 @@ function make_plots()
 
 #First, make the individual paths plot
 
-dat = load("/home/ieshghi/Documents/code/dumbbell/data/individual_paths/basic.jld");
+dat = load("/home/data/ie355/Documents/code/dumbbell/data/individual_paths/basic.jld");
 temp_vals = dat["parvals"].-0.1;
 time = dat["t"];
 trajs = -dat["xvals"];
@@ -33,11 +33,11 @@ tick_params(labelsize = labelfont)
 xticks(0:3000:maximum(time)+1)
 yticks(0:400:maximum(trajs)+1)
 tight_layout();
-savefig("figures/figure_1.eps", bbox_inches="tight");
+#savefig("figures/figure_1.eps", bbox_inches="tight");
 close(1)
 
 #Next, the large kappa plot
-dat = load("/home/ieshghi/Documents/code/dumbbell/data/k_runs/stiff.jld");
+dat = load("/home/data/ie355/Documents/code/dumbbell/data/k_runs/stiff.jld");
 kappa = dat["parvals"];
 trajs = -dat["vvals"];
 
@@ -57,11 +57,11 @@ xticks([1,10])
 yticks([0.1])
 minorticks_off()
 tight_layout();
-savefig("figures/figure_2.eps", bbox_inches="tight")
+#savefig("figures/figure_2.eps", bbox_inches="tight")
 close(2)
 
 #Next, the small kappa plot
-dat = load("/home/ieshghi/Documents/code/dumbbell/data/k_runs/soft.jld");
+dat = load("/home/data/ie355/Documents/code/dumbbell/data/k_runs/soft.jld");
 kappa = dat["parvals"];
 trajs = -dat["vvals"];
 
@@ -82,20 +82,20 @@ yscale("log")
 #yticks([0.1])
 minorticks_off()
 tight_layout();
-savefig("figures/figure_3.eps", bbox_inches="tight")
+#savefig("figures/figure_3.eps", bbox_inches="tight")
 close(3)
 
 #Next, the temperature difference plot
-#dat = readdlm("/home/ieshghi/Documents/code/dumbbell/data/archive/parab_strongk/sl_dt1");
+#dat = readdlm("/home/data/ie355/Documents/code/dumbbell/data/archive/parab_strongk/sl_dt1");
 #temp = LinRange(0,1,100);
 
-dat1 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/colder.jld");
-dat2 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/stiffer.jld");
-dat3 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/stifferer.jld");
-dat5 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/k30.jld");
-dat6 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/k50.jld");
-dat7 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/k70.jld");
-dat8 = load("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/k30_bigt.jld");
+dat1 = load("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/colder.jld");
+dat2 = load("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/stiffer.jld");
+dat3 = load("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/stifferer.jld");
+dat5 = load("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/k30.jld");
+dat6 = load("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/k50.jld");
+dat7 = load("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/k70.jld");
+dat8 = load("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/k30_bigt.jld");
 temp1 = dat1["parvals"].-0.1;
 temp2 = dat2["parvals"].-0.1;
 temp3 = dat3["parvals"].-0.1;
@@ -112,16 +112,19 @@ trajs7 = -dat7["vvals"];
 trajs8 = -dat8["vvals"];
 
 figure(4);
-plot(temp1,trajs1,".",label = L"\kappa = 1");
-plot(temp2,trajs2,".",label = L"\kappa = 10");
-plot(temp3,trajs3,".",label = L"\kappa = 20");
-#plot(temp5,trajs5,".",label = L"\kappa = 50");
-#plot(temp6,trajs6,".",label = L"\kappa = 70");
-#plot(temp7,trajs7,".",label = L"\kappa = 100");
+#plot(temp1,trajs1,".",label = L"\kappa = 1");
+#plot(temp2,trajs2,".",label = L"\kappa = 10");
+#plot(temp3,trajs3,".",label = L"\kappa = 20");
+plot(temp5,trajs5,".",label = L"\kappa = 30");
+plot(temp6,trajs6,".",label = L"\kappa = 50");
+plot(temp7,trajs7,".",label = L"\kappa = 70");
 #plot(temp8,trajs8,".",label = L"\kappa = 30");
-plot(temp1,patching_soln.(0.1,(temp1.+0.1),1,0.1),label="Theory, \$ \\kappa =1 \$");
-plot(temp2,patching_soln.(0.1,(temp2.+0.1),10,0.1),label="Theory, \$ \\kappa =10 \$");
-plot(temp3,patching_soln.(0.1,(temp3.+0.1),20,0.1),label="Theory, \$ \\kappa =20 \$");
+#plot(temp1,patching_soln.(0.1,(temp1.+0.1),1,0.1),label="Theory, \$ \\kappa =1 \$");
+#plot(temp2,patching_soln.(0.1,(temp2.+0.1),10,0.1),label="Theory, \$ \\kappa =10 \$");
+#plot(temp3,patching_soln.(0.1,(temp3.+0.1),20,0.1),label="Theory, \$ \\kappa =20 \$");
+plot(temp5,patching_soln.(0.1,(temp1.+0.1),30,0.1),label="Theory, \$ \\kappa =30 \$");
+plot(temp6,patching_soln.(0.1,(temp2.+0.1),50,0.1),label="Theory, \$ \\kappa =50 \$");
+plot(temp7,patching_soln.(0.1,(temp3.+0.1),70,0.1),label="Theory, \$ \\kappa =70 \$");
 
 xlabel(L"\delta T",fontsize = labelfont,fontname = fontnm)
 ylabel("v",fontsize = labelfont,fontname = fontnm)
@@ -133,14 +136,14 @@ tick_params(labelsize = labelfont)
 #xscale("log")
 #yscale("log")
 tight_layout();
-savefig("figures/figure_4.eps", bbox_inches="tight")
-close(4)
+#savefig("figures/figure_4.eps", bbox_inches="tight")
+#close(4)
 
 #next, cold gravity plot with small gravity values
-dat1 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/small_cold_dt0.jld");
-dat2 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/small_cold_dt1.jld");
-dat3 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/small_cold_dt2.jld");
-dat4 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/small_cold_dt3.jld");
+dat1 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/small_cold_dt0.jld");
+dat2 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/small_cold_dt1.jld");
+dat3 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/small_cold_dt2.jld");
+dat4 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/small_cold_dt3.jld");
 grav1 = dat1["parvals"];
 grav2 = dat2["parvals"];
 grav3 = dat3["parvals"];
@@ -164,15 +167,15 @@ tick_params(labelsize = labelfont)
 #xticks([1,10])
 #yticks([0,.01,.02])
 tight_layout();
-savefig("figures/figure_5.eps", bbox_inches="tight")
+#savefig("figures/figure_5.eps", bbox_inches="tight")
 close(5)
 
 #Next, cold gravity plot with large gravity values
 
-dat1 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/larger_cold_dt0.jld");
-dat2 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/larger_cold_dt1.jld");
-dat3 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/larger_cold_dt2.jld");
-dat4 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/larger_cold_dt3.jld");
+dat1 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/larger_cold_dt0.jld");
+dat2 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/larger_cold_dt1.jld");
+dat3 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/larger_cold_dt2.jld");
+dat4 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/larger_cold_dt3.jld");
 grav1 = dat1["parvals"];
 grav2 = dat2["parvals"];
 grav3 = dat3["parvals"];
@@ -198,15 +201,15 @@ tick_params(labelsize = labelfont)
 xlim([-0.5,30]);
 ylim([-0.5,30]);
 tight_layout();
-savefig("figures/figure_6.eps", bbox_inches="tight")
+#savefig("figures/figure_6.eps", bbox_inches="tight")
 close(6)
 
 #Finally, warm gravity plot with small gravity values
 
-dat1 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/small_hot_dt0.jld");
-dat2 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/small_hot_dt1.jld");
-dat3 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/small_hot_dt2.jld");
-dat4 = load("/home/ieshghi/Documents/code/dumbbell/data/grav_runs/small_hot_dt3.jld");
+dat1 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/small_hot_dt0.jld");
+dat2 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/small_hot_dt1.jld");
+dat3 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/small_hot_dt2.jld");
+dat4 = load("/home/data/ie355/Documents/code/dumbbell/data/grav_runs/small_hot_dt3.jld");
 grav1 = dat1["parvals"];
 grav2 = dat2["parvals"];
 grav3 = dat3["parvals"];
@@ -230,13 +233,15 @@ tick_params(labelsize = labelfont)
 #yticks([0,.01,.02])
 ylim([-.023,.03])
 tight_layout();
-savefig("figures/figure_7.eps", bbox_inches="tight")
+#savefig("figures/figure_7.eps", bbox_inches="tight")
 close(7)
 
 end
 
 function patching_soln(t1,t2,k,lam)
-	t2 = t2
+#    t1 = 2*t1
+#    t2 = 2*t2
+#    k = 2*k
 	j = 1/(pi*erf(2/sqrt(t1+t2)))*2*(exp(-4/(t1+t2))*k*(t1-t2))*((lam-1)*sqrt((1+k*(lam-1)^2)/(16*t1*t2+16*k*t1*t2*(1-lam)^2+k^2*(t1+t2)^2*(1-lam)^4))+lam*sqrt((1+k*lam^2)/(16*t1*t2+16*k*t1*t2*lam^2+k^2*(t1+t2)^2*lam^4)))
 	return j
 end
