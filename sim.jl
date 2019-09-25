@@ -1,4 +1,5 @@
 module sim
+include("histutils.jl")
 using DistributedArrays
 using Distributed
 using Statistics
@@ -30,6 +31,33 @@ function parallelcall(N,x0,dt,nsteps,pars,undersamp = 1,coupling = [1,1]) #simul
   x_out = mean(x_av,dims = 2);
   t = LinRange(0,dt*nsteps,length(x_out));
   return t[1:end],x_out[1:end] #use undersamp if you want to plot subset of points
+end
+
+function bintrajs(x0,dt,nsteps,pars,xbins,ybins,coupling)
+  xhist = zeros(size(xbins));
+  yhist = zeros(size(ybins));
+  pairs,hist = histutils.genmesh(xbins,ybins);
+  
+  hist = histutils.placeinmesh(x0,pairs,hist);
+  po = x0;
+  
+  noise = randn(2,nsteps)
+
+  for i = 2:nsteps
+    p = stepforward(po,dt,pars,coupling,noise[:,i]);
+    hist = histutils.placeinmesh(p,pairs,hist);
+	po = p;
+  end
+
+  return hist
+end
+
+function stepforward(x0,dt,pars,coupling,noise) #Feed in unitless parameters here!
+  b = [sqrt.(2*dt*pars[1]),sqrt.(2*dt*pars[2])];
+  x = x0;
+  a = rhs(x,pars,coupling);
+  x += a*dt + b.*noise;
+  return x
 end
 
 function evolve(x0,dt,nsteps,pars,undersamp,coupling) #Feed in unitless parameters here!
