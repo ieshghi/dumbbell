@@ -38,14 +38,13 @@ function bintrajs(x0,dt,nsteps,pars,xbins,ybins,coupling)
   yhist = zeros(size(ybins));
   pairs,hist = histutils.genmesh(xbins,ybins);
   
-  hist = histutils.placeinmesh(x0,pairs,hist);
+  hist = histutils.placeinmesh(x0,pairs,hist,pars[4]);
   po = x0;
   
   noise = randn(2,nsteps)
-
   for i = 2:nsteps
     p = stepforward(po,dt,pars,coupling,noise[:,i]);
-    hist = histutils.placeinmesh(p,pairs,hist);
+    hist = histutils.placeinmesh(p,pairs,hist,pars[4]);
 	po = p;
   end
 
@@ -92,6 +91,27 @@ function rhs(x,pars,coupling)
   gforce = g*ones(2);
 
   return -(extforce + sprforce + gforce)
+end
+
+function potential(x,l,pot)
+  z = x-floor(x);
+  z = ((x%1+1)%1);
+  if pot == 1
+    if z<l
+      return z/l;
+    else
+      return (1-z)/(1-l);
+    end
+  elseif pot == 2
+    if z < l
+      return z^2/l^2
+    else
+      return (z-1)^2/(1-l)^2
+    end
+  else
+    return nan
+    print("Wrong choice of potential! Choose 1 or 2")
+  end
 end
 
 function gpot(x,l,pot)

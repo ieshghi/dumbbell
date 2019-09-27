@@ -1,7 +1,9 @@
 module load_plot
 using JLD
 using DelimitedFiles
-using PyPlot
+#using PyPlot
+using Plots
+pyplot()
 using SpecialFunctions
 
 #Define font sizes to be uniform
