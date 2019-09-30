@@ -5,7 +5,6 @@ using JLD
 using DistributedArrays
 using Plots
 pyplot()
-
 # pars = [t1,t2,k,lambda,g,potchoice]
 
 #calculates probability density heat maps from runs
@@ -21,8 +20,8 @@ end
 
 function calc_curr(x,y,p,pars,dx,dy)
 	xm,ym,pm = histutils.shape_prob(x,y,p);
-	f1 = -sim.gpot.(xm,pars[4],2)+pars[3].*ym;
-	f2 = sim.gpot.(xm,pars[4],2)-2*pars[3].*ym;
+	f1 = -sim.gpot.(xm.+pars[4],pars[4],2)+pars[3].*ym;
+	f2 = sim.gpot.(xm.+pars[4],pars[4],2)-2*pars[3].*ym;
 	dxp = findif(pm,dx,1);
 	dyp = findif(pm,dy,2);
 	tx = pars[1];
@@ -61,13 +60,39 @@ function findif(f,d,dir)
 end
 
 function plotstuff(x,y,p,jx,jy,pars)
-	rat = length(unique(x))/length(unique(y));
-	prplot = heatmap(p,aspect_ratio=rat);
+	theme(:default);
+	col = (:plasma);
+	usamp = 2;
+	mult = 5;
+	rat = (maximum(x)-minimum(x))/(maximum(y)-minimum(y));
 	xl = linrang(pars[4],1+pars[4],1000);
+	xs = linrang(0,1,length(p[:,1]));
+	ys = LinRange(minimum(y),maximum(y),length(p[1,:]));
+	prplot = heatmap(xs,ys,p,aspect_ratio=rat,c=col,colorbar=false);
 	potplot = plot(xl,sim.potential.(xl,pars[4],2));
-	boltzplot = heatmap(boltz(x,y,pars),aspect_ratio=rat);
-	plot(prplot,boltzplot,layout=(2,1),legend=false,size=(600,600))
+	boltzplot = heatmap(xs,ys,boltz(x,y,pars),c=col,aspect_ratio=rat);
+	jxplot = heatmap(xs,ys,jx,aspect_ratio = rat,c=col,colorbar=false);
+	jyplot = heatmap(xs,ys,jy,aspect_ratio = rat,c=col,colorbar=false);
+	qplot = quiv_under(x,y,jx,jy,5,300,rat);	
+
+	plot(prplot,qplot,jxplot,jyplot,layout=(2,2),legend=false,size=(700,700))
 end
+
+function quiv_under(x,y,jx,jy,u,m,rat = 1)
+	x = x[1:u:end,1:u:end];
+	y = y[1:u:end,1:u:end];
+	jx = m*jx[1:u:end,1:u:end];
+	jy = m*jy[1:u:end,1:u:end];
+	return quiver(x,y,gradient=(jx,jy)[1],aspect_ratio = rat,arrow=arrow(.3,.1),linecolor=:steelblue);
+end
+
+function savestuff(x,y,p,jx,jy,pars,name)
+	save(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".jld"),"x",x,"y",y,"p",p,"jx",jx,"jy",jy,"pars",pars);
+end
+function loadstuff(name)
+	load(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".jld"));
+end
+
 
 function boltz(x,y,pars)
 	t1 = pars[1];
