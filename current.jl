@@ -1,10 +1,10 @@
 module current
 include("sim.jl")
 include("histutils.jl")
-using JLD
 using DistributedArrays
 using Plots
 pyplot()
+using HDF5
 # pars = [t1,t2,k,lambda,g,potchoice]
 
 #calculates probability density heat maps from runs
@@ -29,7 +29,7 @@ function calc_curr(x,y,p,pars,dx,dy)
 	D = [[tx,tx],[tx,tx+ty]];
 	jx = f1.*pm-(D[1][1]).*dxp-(D[1][2]).*dyp;
 	jy = f2.*pm-(D[2][1]).*dxp-(D[2][2]).*dyp;
-	
+
 	return xm,ym,pm,jx,jy
 end
 
@@ -64,15 +64,17 @@ function plotstuff(x,y,p,jx,jy,pars)
 	col = (:plasma);
 	usamp = 2;
 	mult = 5;
+	jxl = LinRange(minimum(jx),maximum(jx),50);
+	jyl = LinRange(minimum(jy),maximum(jy),50);
 	rat = (maximum(x)-minimum(x))/(maximum(y)-minimum(y));
 	xl = linrang(pars[4],1+pars[4],1000);
 	xs = linrang(0,1,length(p[:,1]));
 	ys = LinRange(minimum(y),maximum(y),length(p[1,:]));
-	prplot = heatmap(xs,ys,p,aspect_ratio=rat,c=col,colorbar=false);
+	prplot = contourf(xs,ys,p,aspect_ratio=rat,c=col,colorbar=false);
 	potplot = plot(xl,sim.potential.(xl,pars[4],2));
-	boltzplot = heatmap(xs,ys,boltz(x,y,pars),c=col,aspect_ratio=rat);
-	jxplot = heatmap(xs,ys,jx,aspect_ratio = rat,c=col,colorbar=false);
-	jyplot = heatmap(xs,ys,jy,aspect_ratio = rat,c=col,colorbar=false);
+	boltzplot = contourf(xs,ys,boltz(x,y,pars),c=col,aspect_ratio=rat);
+	jxplot = contourf(xs,ys,jx,aspect_ratio = rat,colorbar=false,levels=collect(jxl));
+	jyplot = contourf(xs,ys,jy,aspect_ratio = rat,colorbar=false,levels=collect(jyl));
 	qplot = quiv_under(x,y,jx,jy,5,300,rat);	
 
 	plot(prplot,qplot,jxplot,jyplot,layout=(2,2),legend=false,size=(700,700))
@@ -87,10 +89,21 @@ function quiv_under(x,y,jx,jy,u,m,rat = 1)
 end
 
 function savestuff(x,y,p,jx,jy,pars,name)
-	save(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".jld"),"x",x,"y",y,"p",p,"jx",jx,"jy",jy,"pars",pars);
+	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"x",x);
+	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"y",y);
+	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"p",p);
+	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jx",jx);
+	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jy",jy);
+	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"pars",pars);
 end
 function loadstuff(name)
-	load(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".jld"));
+	x = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"x");
+	y = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"y");
+	p = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"p");
+	jx = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jx");
+	jy = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jy");
+	pars = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"pars");
+	return x,y,p,jx,jy,pars
 end
 
 
