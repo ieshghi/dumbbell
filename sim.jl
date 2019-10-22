@@ -125,7 +125,7 @@ function gpot(x,l,pot)
     end
   elseif pot == 2
     if z < l
-      return 2*z/l^2
+      return 2*(z)/l^2
     else
       return 2*(z-1)/(1-l)^2
     end
