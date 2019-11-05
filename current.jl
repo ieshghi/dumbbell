@@ -52,6 +52,10 @@ function linrang(a,b,n) #like linrange, but without the end. Get it?
 	return range(a, stop=b, length=n+1)[1:end-1]
 end
 
+function curl(fx,fy,dx,dy);
+	return findif(fy,dx,1)-findif(fx,dy,2);
+end
+
 function findif(f,d,dir)
 	if ndims(f)>1
 	if dir == 1
@@ -76,17 +80,23 @@ function plotstuff(x,y,p,jx,jy,pars)
 	xl = linrang(pars[4],1+pars[4],1000);
 	xs = linrang(0,1,length(p[:,1]));
 	ys = LinRange(minimum(y),maximum(y),length(p[1,:]));
+	dx = xs[2]-xs[1];
+	dy = ys[2]-ys[1];
+	cf = curl(jx,jy,dx,dy);
+	cfl = LinRange(minimum(cf),maximum(cf),50);
+
 	prplot = contourf(xs,ys,p,aspect_ratio=rat,c=col,colorbar=true,title="Potential");
 	potplot = plot(xl,sim.potential.(xl,pars[4],2));
 	boltzplot = contourf(xs,ys,boltz(x,y,pars),c=col,aspect_ratio=rat);
 	jxplot = contourf(xs,ys,jx,aspect_ratio = rat,colorbar=true,levels=collect(jxl),title="X-current");
 	jyplot = contourf(xs,ys,jy,aspect_ratio = rat,colorbar=true,levels=collect(jyl),title="S-current");
-	qplot = quiv_under(x,y,jx,jy,5,300,rat);	
+	qplot = quiv_under(x,y,jx,jy,10,1000,rat);	
+	curlplot = contourf(xs,ys,cf,aspect_ratio=rat,colorbar=true,levels=collect(cfl),title="curl");
 	sliceplot = plot(unique(x),[jx[y.==0.],jy[y.==0.]],title="Current at s=0",label=["jx","jy"])
 
-	l = @layout [ grid(2,2)
-				  b{0.2h} ];
-	plot(prplot,qplot,jxplot,jyplot,sliceplot,layout=l,legend=false,size=(800,800))
+#	l = @layout [ grid(2,2)
+#				  b{0.2h} ];
+	plot(prplot,qplot,jxplot,jyplot,curlplot,sliceplot,layout = (3,2),legend=false,size=(800,800))
 end
 
 function plotgauss(x,y)
