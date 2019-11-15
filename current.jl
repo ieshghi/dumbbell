@@ -96,7 +96,7 @@ function plotstuff(x,y,p,jx,jy,pars)
 
 #	l = @layout [ grid(2,2)
 #				  b{0.2h} ];
-	plot(prplot,qplot,jxplot,jyplot,curlplot,sliceplot,layout = (3,2),legend=false,size=(800,800))
+	plot(prplot,qplot,jxplot,jyplot,curlplot,sliceplot,layout = (3,2),legend=false,size=(800,800),reuse=false)
 end
 
 function plotgauss(x,y)
@@ -135,20 +135,20 @@ function quiv_under(x,y,jx,jy,u,m,rat = 1)
 end
 
 function savestuff(x,y,p,jx,jy,pars,name)
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"x",x);
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"y",y);
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"p",p);
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jx",jx);
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jy",jy);
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"pars",pars);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"x",x);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"y",y);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"p",p);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"jx",jx);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"jy",jy);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"pars",pars);
 end
 function loadstuff(name)
-	x = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"x");
-	y = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"y");
-	p = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"p");
-	jx = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jx");
-	jy = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jy");
-	pars = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"pars");
+	x = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"x");
+	y = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"y");
+	p = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"p");
+	jx = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"jx");
+	jy = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"jy");
+	pars = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"pars");
 	return x,y,p,jx,jy,pars
 end
 
