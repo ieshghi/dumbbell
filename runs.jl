@@ -100,7 +100,7 @@ function currentset()
   #print("Then, a stiff-k run with colder cold particle")
   #singlevarrun("k_runs/stiff",[0.1,1.0,1.0,0.1,0,2],3,1.0,20,100);
 
-  print("Then, a gravity run with small range and cold particle")
+  #print("Then, a gravity run with small range and cold particle")
   #singlevarrun("grav_runs/small_cold_dt0",[0.1,0.1,1.0,0.9,0,2],5,0,1.5,50);
   #singlevarrun("grav_runs/small_cold_dt1",[0.1,1.1,1.0,0.9,0,2],5,0,1.5,50);
   #singlevarrun("grav_runs/small_cold_dt2",[0.1,2.1,1.0,0.9,0,2],5,0,1.5,50);
@@ -110,7 +110,7 @@ function currentset()
   #singlevarrun("grav_runs/small_hot_dt1",[0.5,1.5,1.0,0.1,0,2],5,0,.01,100);
   #singlevarrun("grav_runs/small_hot_dt2",[0.5,2.5,1.0,0.1,0,2],5,0,.01,100);
   #singlevarrun("grav_runs/small_hot_dt3",[0.5,3.5,1.0,0.1,0,2],5,0,.01,100);
-  print("Then, a gravity run with large range and cold particle")
+  #print("Then, a gravity run with large range and cold particle")
   #singlevarrun("grav_runs/larger_cold_dt0",[0.1,.1,1.0,0.9,0,2],5,0,50,50);
   #singlevarrun("grav_runs/larger_cold_dt1",[0.1,1.1,1.0,0.9,0,2],5,0,50,50);
   #singlevarrun("grav_runs/larger_cold_dt2",[0.1,2.1,1.0,0.9,0,2],5,0,50,50);
@@ -132,18 +132,18 @@ function currentset()
   #singlevarrun("temp_runs/k2_t0",[0,0.1,2,0.1,0,2],2,0.1,1.0,40); #take smaller timesteps and undersample... 
   #singlevarrun("temp_runs/k5_t0",[0,0.1,5,0.1,0,2],2,0.1,1.0,40);
   #singlevarrun("temp_runs/k10_t0",[0,0.1,10,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k30_t0",[0,0.1,30,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k50_t0",[0,0.1,50,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k70_t0",[0,0.1,70,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k30_t0",[0,0.1,30,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k50_t0",[0,0.1,50,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k70_t0",[0,0.1,70,0.1,0,2],2,0.1,1.0,40);
   
   print("Some runs with t0=0.01")
-  singlevarrun("temp_runs/k1_t001",[0.01,0.1,1,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k2_t001",[0.01,0.1,2,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k5_t001",[0.01,0.1,5,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k10_t001",[0.01,0.1,10,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k30_t001",[0.01,0.1,30,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k50_t001",[0.01,0.1,50,0.1,0,2],2,0.1,1.0,40);
-  singlevarrun("temp_runs/k70_t001",[0.01,0.1,70,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k1_t001",[0.01,0.1,1,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k2_t001",[0.01,0.1,2,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k5_t001",[0.01,0.1,5,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k10_t001",[0.01,0.1,10,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k30_t001",[0.01,0.1,30,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k50_t001",[0.01,0.1,50,0.1,0,2],2,0.1,1.0,40);
+  #singlevarrun("temp_runs/k70_t001",[0.01,0.1,70,0.1,0,2],2,0.1,1.0,40);
   
   #print("\n one t-run which goes much further in k")
   #singlevarrun("temp_runs/k30_bigt",[0.1,0.1,30,0.1,0,2],2,0.1,5.0,40);
@@ -158,6 +158,16 @@ function currentset()
   #singlevar_dec_run("temp_runs/decoup_k2_t0",[0,0.1,2.0,0.1,0,2],2,0.1,1.0,40);
   #singlevar_dec_run("temp_runs/decoup_k5_t0",[0,0.1,5.0,0.1,0,2],2,0.1,1.0,40);
   #singlevar_dec_run("temp_runs/decoup_k10_t0",[0,0.1,10.0,0.1,0,2],2,0.1,1.0,40);
+  
+  singlevar_dec_run("temp_runs/decoup_k1_t01",[0.01,0.1,1.0,0.1,0,2],2,0.1,1.0,40);
+  singlevar_dec_run("temp_runs/decoup_k2_t01",[0.01,0.1,2.0,0.1,0,2],2,0.1,1.0,40);
+  singlevar_dec_run("temp_runs/decoup_k5_t01",[0.01,0.1,5.0,0.1,0,2],2,0.1,1.0,40);
+  singlevar_dec_run("temp_runs/decoup_k10_t01",[0.01,0.1,10.0,0.1,0,2],2,0.1,1.0,40);
+  singlevar_dec_run("temp_runs/decoup_k1_t05",[0.05,0.1,1.0,0.1,0,2],2,0.1,1.0,40);
+  singlevar_dec_run("temp_runs/decoup_k2_t05",[0.05,0.1,2.0,0.1,0,2],2,0.1,1.0,40);
+  singlevar_dec_run("temp_runs/decoup_k5_t05",[0.05,0.1,5.0,0.1,0,2],2,0.1,1.0,40);
+  singlevar_dec_run("temp_runs/decoup_k10_t05",[0.05,0.1,10.0,0.1,0,2],2,0.1,1.0,40);
+
 
 end
 
