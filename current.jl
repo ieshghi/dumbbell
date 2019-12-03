@@ -34,7 +34,7 @@ function calc_curr(x,y,p,pars,dx,dy,ifshape=true)
 	ty = pars[2];
 	D = [[tx,tx],[tx,tx+ty]];
 	jx = f1.*pm-(D[1][1]).*dxp-(D[1][2]).*dyp;
-	jy = f2.*pm-(D[2][1]).*dxp-(D[2][2]).*dyp;
+	jy = f2.*pm+(D[2][1]).*dxp-(D[2][2]).*dyp;
 
 	return xm,ym,pm,jx,jy
 end
