@@ -92,7 +92,7 @@ function plotstuff(x,y,p,jx,jy,pars)
 	jyplot = contourf(xs,ys,jy,aspect_ratio = rat,colorbar=true,levels=collect(jyl),title="S-current");
 	qplot = quiv_under(x,y,jx,jy,4,100,rat);	
 	curlplot = contourf(xs,ys,cf,aspect_ratio=rat,colorbar=true,levels=collect(cfl),title="curl");
-	sliceplot = plot(unique(y),[jx[x.==0.05][2:end],jx[x.==0.95][2:end]],title="Current at s=0",label=["jx","jy"])
+	sliceplot = plot(unique(y),[jx[x.==0.01][2:end],jx[x.==0.99][2:end]],title="Current at s=0",label=["jx","jy"])
 	
 	print(sum(jx[x.==0.05]))
 
@@ -137,20 +137,20 @@ function quiv_under(x,y,jx,jy,u,m,rat = 1)
 end
 
 function savestuff(x,y,p,jx,jy,pars,name)
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"x",x);
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"y",y);
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"p",p);
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jx",jx);
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jy",jy);
-	h5write(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"pars",pars);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"x",x);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"y",y);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"p",p);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"jx",jx);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"jy",jy);
+	h5write(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"pars",pars);
 end
 function loadstuff(name)
-	x = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"x");
-	y = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"y");
-	p = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"p");
-	jx = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jx");
-	jy = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"jy");
-	pars = h5read(string("/home/ieshghi/Documents/code/dumbbell/data/hists/",name,".h5"),"pars");
+	x = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"x");
+	y = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"y");
+	p = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"p");
+	jx = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"jx");
+	jy = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"jy");
+	pars = h5read(string("/home/data/ie355/Documents/code/dumbbell/data/hists/",name,".h5"),"pars");
 	return x,y,p,jx,jy,pars
 end
 
