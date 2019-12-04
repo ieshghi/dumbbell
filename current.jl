@@ -92,7 +92,9 @@ function plotstuff(x,y,p,jx,jy,pars)
 	jyplot = contourf(xs,ys,jy,aspect_ratio = rat,colorbar=true,levels=collect(jyl),title="S-current");
 	qplot = quiv_under(x,y,jx,jy,4,100,rat);	
 	curlplot = contourf(xs,ys,cf,aspect_ratio=rat,colorbar=true,levels=collect(cfl),title="curl");
-	sliceplot = plot(unique(x),[jx[y.==0.],jy[y.==0.]],title="Current at s=0",label=["jx","jy"])
+	sliceplot = plot(unique(y),[jx[x.==0.05][2:end],jx[x.==0.95][2:end]],title="Current at s=0",label=["jx","jy"])
+	
+	print(sum(jx[x.==0.05]))
 
 #	l = @layout [ grid(2,2)
 #				  b{0.2h} ];
