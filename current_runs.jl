@@ -16,7 +16,7 @@ end
 function prep_vals()
 
 	tc = 0
-	thvals = [0.1,0.3,0.5,0.8,1.1];
+    thvals = LinRange(0.1,1,40)
 	for i = thvals
 		pars = [tc,i,1.0,0.3,0,2]
 		x,y,p,jx,jy = current.getrun(10,pars,100,100,3,.01,10^7)
@@ -48,8 +48,8 @@ function compare_vals()
         v1_curr[i] = calcnet(x,y,p,jx,jy,pars)
     end
 
-    plot([thvals,thvals_curr],[v0,v0_curr*10^4],reuse=false)
-    plot([thvals,thvals_curr],[v1,v1_curr*10^3],reuse=false)
+    plot([thvals,thvals_curr],[v0,v0_curr],reuse=false)
+    plot([thvals,thvals_curr],[v1,v1_curr],reuse=false)
 
 end
 
