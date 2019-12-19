@@ -16,15 +16,15 @@ end
 function prep_vals()
 
 	tc = 0
-    thvals = LinRange(0.1,1,40)
+    thvals = [0.1,0.3,0.5,0.8,1]
 	for i = thvals
-		pars = [tc,i,1.0,0.3,0,2]
+		pars = [tc,i,1.0,0.1,0,2]
 		x,y,p,jx,jy = current.getrun(10,pars,100,100,3,.01,10^7)
 		current.savestuff(x,y,p,jx,jy,pars,string("extra/tc",tc,"th",i))
 	end
 	tc = 0.01
 	for i = thvals
-		pars = [tc,i,1.0,0.3,0,2]
+		pars = [tc,i,1.0,0.1,0,2]
 		x,y,p,jx,jy = current.getrun(10,pars,100,100,3,.01,10^7)
 		current.savestuff(x,y,p,jx,jy,pars,string("extra/tc",tc,"th",i))
 	end
@@ -33,10 +33,10 @@ end
 function compare_vals()
     
     thvals = LinRange(0.1,1,40)
-    v0 = h5read("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/decoup_k1_t0.h5", "vvals")
-    v1 = h5read("/home/ieshghi/Documents/code/dumbbell/data/temp_runs/decoup_k1_t01.h5", "vvals")
+    v0 = h5read("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/decoup_k1_t0.h5", "vvals")
+    v1 = h5read("/home/data/ie355/Documents/code/dumbbell/data/temp_runs/decoup_k1_t01.h5", "vvals")
     
-    thvals_curr = [0.1,0.3,0.5,0.8,1.1]
+    thvals_curr = [0.1,0.3,0.5,0.8,1]
     ncurr = length(thvals_curr)
     v0_curr = zeros(ncurr);
     v1_curr = zeros(ncurr);
