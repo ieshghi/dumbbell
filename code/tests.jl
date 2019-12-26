@@ -17,9 +17,9 @@ function equil_sim_test(nvals) #currents should be 0 in equilibrium
 		jx_tru = zeros(size(cb_calc))
 		jy_tru = zeros(size(cb_calc))
 	
-		err_sim[i] = maximum(abs.(cn-cb_tru))
-		err_calc[i] = maximum(abs.(jx_calc-jx_tru)+abs.(jy_calc-jy_tru))
-		err_all[i] = maximum(abs.(jx-jx_tru)+abs.(jy-jy_tru))
+		err_sim[i] = sqrt(sum((cn-cb_tru).^2)/sum(ones(size(cn))))
+		err_calc[i] = sqrt(sum((jx_calc-jx_tru).^2+(jy_calc-jy_tru).^2)/sum(ones(size(cn))))
+		err_all[i] = sqrt(sum((jx-jx_tru).^2+(jy-jy_tru).^2)/sum(ones(size(cn))))
 	end
 	return err_sim,err_calc,err_all
 end
