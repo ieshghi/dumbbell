@@ -8,7 +8,7 @@ function equil_sim_test(nvals) #currents should be 0 in equilibrium
 	err_calc = zeros(size(nvals))
 	err_all = zeros(size(nvals))
 	@inbounds for i = 1:length(nvals)
-		c,x,y = simbase.run_and_bin([0,0],.01,pars,10^7,nvals(i),nvals(i),5.0)
+		c,x,y = simbase.run_and_bin([0,0],.01,pars,10^7,nvals[i],nvals[i],5.0)
 		jx,jy,cn = dual_current.calc_curr(c,pars,x,y)
 		cb_tru = dual_current.boltzmann(x,y,pars)
 		cb_tru = cb_tru.*maximum(cn)
