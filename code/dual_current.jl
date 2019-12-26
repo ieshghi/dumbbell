@@ -65,7 +65,7 @@ function boltzmann(x::Array{Float64,1},y::Array{Float64,1},pars::Array{Float64,1
 	k = pars[3]
 	t1 = pars[1]
 	t2 = pars[2]
-	tb = mean([t1,t2])
+	tb = (t1+t2)/2
 	if t1!=t2
 		print("Warning: boltzmann temperature is not well defined! Taking average.\n\n")
 	end
@@ -82,13 +82,9 @@ function force(x::Array{Float64,1},xo::Array{Float64,1},y::Array{Float64,1},l::F
 	
 	uprime = up(x,xo,l)
 
-	#@inbounds for i = 1:length(y)
-	#	xf[:,i] = -uprime.+k*y[i]
-	#	yf[:,i] = uprime.-2*k*y[i]
-	#end
-	@inbounds for i = 1:length(x)
-		xf[i,:] = -k*x[i]
-		yf[i,:] = -2*k*x[i]
+	@inbounds for i = 1:length(y)
+		xf[:,i] = -uprime.+k*y[i]
+		yf[:,i] = uprime.-2*k*y[i]
 	end
 	
 	return xf,yf
