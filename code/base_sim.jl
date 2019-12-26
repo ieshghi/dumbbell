@@ -8,6 +8,16 @@
 
 module simbase
 
+function ext_pot(x::Float64,l::Float64)
+	xm = x%1-(sign(x)-1)/2
+
+	if xm<=l
+		return (x-l)^2/(l^2)
+	else
+		return (x-l)^2/((1-l)^2)
+	end
+end
+
 function ext_force(x::Float64,l::Float64)
 	xm = x%1-(sign(x)-1)/2
 	if xm<=l
@@ -83,9 +93,10 @@ function norm_lat(lat::Array{Float64,2},x::Array{Float64,1},y::Array{Float64,1})
 	dys = y-circshift(y,-1)
 	dys[end]=dys[end-1]
 	
+	ntot = sum(lat)
 	ars = abs.(dxs)*abs.(dys')
 
-	return lat./ars
+	return lat./(ntot*ars)
 end
 
 end

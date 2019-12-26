@@ -60,6 +60,22 @@ function up(xj::Array{Float64,1},xo::Array{Float64,1},l::Float64)
 	return interp(xo,xj,uold)
 end
 
+function boltzmann(x::Array{Float64,1},y::Array{Float64,1},pars::Array{Float64,1}) #boltzmann distribution for a set of parameters. Can be useful for tests
+	l = pars[4]
+	k = pars[3]
+	t1 = pars[1]
+	t2 = pars[2]
+	tb = mean([t1,t2])
+	if t1!=t2
+		print("Warning: boltzmann temperature is not well defined! Taking average.\n\n")
+	end
+	xarr = x*ones(size(y'))
+	yarr = ones(size(x))*y'
+
+	pot = k/2*yarr.^2 + simbase.ext_pot.(xarr,l)
+	return exp.(-pot./tb) #We can always normalize later, shouldn't matter much
+end
+
 function force(x::Array{Float64,1},xo::Array{Float64,1},y::Array{Float64,1},l::Float64,k::Float64)
 	xf = zeros(size(x*y'))
 	yf = zeros(size(x*y'))
