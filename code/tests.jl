@@ -11,6 +11,7 @@ function equil_sim_test(nvals) #currents should be 0 in equilibrium
 		c,x,y = simbase.run_and_bin([0,0],.01,pars,10^7,nvals(i),nvals(i),5.0)
 		jx,jy,cn = dual_current.calc_curr(c,pars,x,y)
 		cb_tru = dual_current.boltzmann(x,y,pars)
+		cb_tru = cb_tru.*maximum(cn)
 		jx_calc,jy_calc,cb_calc = dual_current.calc_curr(cb_tru,pars,x,y)
 		jx_tru = zeros(size(cb_calc))
 		jy_tru = zeros(size(cb_calc))
