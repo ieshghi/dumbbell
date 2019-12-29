@@ -20,7 +20,7 @@ end
 
 function ext_force(x::Float64,l::Float64)
 	xm = x%1-(sign(x)-1)/2
-	if xm<=l
+	if xm<l
 		return 2*(xm-l)./(l^2)
 	else
 		return 2*(xm-l)./((1-l)^2)
