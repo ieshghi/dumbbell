@@ -14,10 +14,6 @@ module dual_current
 include("base_sim.jl")
 using Interpolations
 
-function interp(f::Array{Float64,1}) #for a function defined on the "c" lattice, interpolates it onto the new lattice
-	return (f+circshift(f,1))/2 #basically just linearly interpolate. New lattice is defined at the midpoint between old lattice points.
-end
-
 function gen_dual_lat(lat::Array{Float64,2},x::Array{Float64,1},y::Array{Float64,1})
 	n = length(x)
 	xn = Array(range(0.,stop = 1.0,length = n+1)[1:end-1]) #This works when n is a multiple of 10 and the patching point is at a multiple of 0.1. No need to generalize further.
@@ -34,10 +30,6 @@ function gen_dual_lat(lat::Array{Float64,2},x::Array{Float64,1},y::Array{Float64
 end
 
 function force(x::Array{Float64,1},xo::Array{Float64,1},y::Array{Float64,1},l::Float64,k::Float64)
-	#newf = interp(simbase.ext_force.(xo,l)) #External force interpolated on new lattice
-	#j = Int(floor(length(x)*l))+1
-	#newf[j] = simbase.ext_force.(x,l)[j]
-
 	newf = simbase.ext_force.(x,l)
 	newf[1] = 1/2*(newf[end]+newf[2])
 
