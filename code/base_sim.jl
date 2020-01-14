@@ -19,7 +19,11 @@ function ext_pot(x::Float64,l::Float64)
 end
 
 function ext_force(x::Float64,l::Float64)
-	xm = x%1-(sign(x)-1)/2
+	if x==0
+		xm = 0;
+	else
+		xm = x%1-(sign(x)-1)/2
+	end
 	if xm<l
 		return 2*(xm-l)./(l^2)
 	else
@@ -88,15 +92,10 @@ function gen_c_lattice(nx::Int,ny::Int,ymax::Float64,l::Float64)
 end
 
 function norm_lat(lat::Array{Float64,2},x::Array{Float64,1},y::Array{Float64,1})
-	dxs = x-circshift(x,-1)
-	dxs[end]=dxs[end-1]
-	dys = y-circshift(y,-1)
-	dys[end]=dys[end-1]
-	
+	dx = x[2]-x[1]
+	dy = y[2]-y[1]
 	ntot = sum(lat)
-	ars = abs.(dxs)*abs.(dys')
-
-	return lat./(ntot*ars)
+	return lat./(ntot*dy*dx)
 end
 
 end
