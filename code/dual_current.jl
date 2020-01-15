@@ -3,8 +3,7 @@
 #	File: dual_current
 #	Description: from the probability distributions calculated by sim_base.jl, 
 #				 calculates currents on a dual lattice which sits on pathological points
-#				 where J is well defined. This lattice may have a slightly different number
-#				 of pixels from the original lattice
+#				 where J is well defined. 
 #
 #	Author: Iraj Eshghi
 #
