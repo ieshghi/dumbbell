@@ -14,10 +14,10 @@ for i = idmin:idmax
 	
 end
 l /= length(idmin:idmax)
-x = h5read(string("../../data/hists/run",idmin,".h5"),"x")
-y = h5read(string("../../data/hists/run",idmin,".h5"),"y")
+x = h5read(string("/home/ie355/code/dumbbell/data/hists/run",idmin,".h5"),"x")
+y = h5read(string("/home/ie355/code/dumbbell/data/hists/run",idmin,".h5"),"y")
 
-h5open("../../data/hists/collected.h5","w") do file
+h5open("/home/ie355/code/dumbbell/data/hists/collected.h5","w") do file
 	write(file,"l",l)
 	write(file,"x",x)
 	write(file,"y",y)
