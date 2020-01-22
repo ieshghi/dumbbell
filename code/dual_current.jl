@@ -11,6 +11,7 @@
 
 module dual_current
 include("base_sim.jl")
+using DSP 
 
 function gen_dual_lat(lat::Array{Float64,2},x::Array{Float64,1},y::Array{Float64,1})
 	n = length(x)
@@ -22,7 +23,10 @@ function gen_dual_lat(lat::Array{Float64,2},x::Array{Float64,1},y::Array{Float64
 	dx = xn[2]-xn[1]
 	
 	lat_dy = 1/(2*dy)*(circshift(lat_n,[0,-1])-circshift(lat_n,[0,1])) #Calculate derivatives with second-order centered finite difference. Assume periodicity (technically untrue in y direction but the probability distribution is basically 0 at large y values so this shouldn't matter.
+	#oldlat_dx = 1/(2*dx)*(circshift(lat,[-1,0])-circshift(lat,[1,0])) #This is the slope at the midpoint between two old lattice points.
+
 	lat_dx = 1/(dx)*(lat-circshift(lat,[1,0])) #This is the slope at the midpoint between two old lattice points.
+	#lat_dx = 1/2*(oldlat_dx+circshift(oldlat_dx,[1,0])) #This is the slope at the midpoint between two old lattice points.
 	
 	return lat_n,lat_dx,lat_dy,xn,y
 end
@@ -52,6 +56,19 @@ function calc_curr(c::Array{Float64,2},pars::Array{Float64,1},xo::Array{Float64,
 	jy = fy.*cn.-D[2][1].*cdx.-D[2][2].*cdy
 
 	return jx,jy,cn,xn,y,fx,fy,cdx,cdy	
+end
+
+function coarse_grain_2(arr::Array{Float64,2},x::Array{Float64,1},y::Array{Float64,1},n::Int=1)
+	for i = 1:n
+		arr2 = conv(arr,[1,1]*[1,1]')
+		global arr2_sm = arr2[1:2:end,1:2:end]./4
+		global xo = x[1:2:end]
+		global yo = y[1:2:end]
+		arr = arr2_sm
+		x = xo
+		y = yo
+	end
+	return arr2_sm,xo,yo
 end
 
 end
