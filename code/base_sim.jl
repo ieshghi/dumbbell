@@ -34,8 +34,10 @@ end
 function timestep!(x::Array{Float64,1},dt::Float64,pars::Array{Float64,1},noise::Array{Float64,1})
 	b = sqrt.(2*dt*[pars[1],pars[2]])
 	a = rhs(x,pars)
-	x[1] += a[1]*dt+b[1]*noise[1]
+	hop = a[1]*dt+b[1]*noise[1]
+	x[1] += hop
 	x[2] += a[2]*dt+b[2]*noise[2]-b[1]*noise[1]
+	return hop
 end
 
 function rhs(x::Array{Float64,1},pars::Array{Float64,1})
@@ -53,12 +55,14 @@ function run_and_bin(x0::Array{Float64,1},dt::Float64,pars::Array{Float64,1},nst
 	lat,xvals,yvals = gen_c_lattice(nx,ny,ymax,pars[4])
 	noise = randn(nsteps,2)
 	x = x0
+	maxhop = 0
 	@inbounds for i = 1:nsteps
-			timestep!(x,dt,pars,noise[i,:])
+			hop = timestep!(x,dt,pars,noise[i,:])
 			place_in_lattice!(x,lat,xvals,yvals)
+			maxhop += abs(hop)
 	end
 	nlat = norm_lat(lat,xvals,yvals)
-	return nlat,xvals,yvals
+	return nlat,xvals,yvals,maxhop/nsteps
 end
 
 function place_in_lattice!(x::Array{Float64,1},lat::Array{Float64,2},xvals::Array{Float64,1},yvals::Array{Float64,1})
