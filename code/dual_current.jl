@@ -38,8 +38,8 @@ function force(x::Array{Float64,1},xo::Array{Float64,1},y::Array{Float64,1},l::F
 	newf = simbase.ext_force.(x,l) #External force on new lattice (has one discontinuity at 0!)
 	newf[1] = 1/2*(oldf[end]+oldf[1]) #the only problematic point for the force, the discontinuity at 0, is smoothed by taking the value of the force there to be the average of the neighbours on the old lattice 
 
-	xf = -newf*ones(size(y')) + k*ones(size(x))*y'
-	yf = newf*ones(size(y')) - 2*k*ones(size(x))*y' #Force fields on new lattice as given by Langevin equations
+	xf = -0*newf*ones(size(y')) + k*ones(size(x))*y'
+	yf = 0*newf*ones(size(y')) - 2*k*ones(size(x))*y' #Force fields on new lattice as given by Langevin equations
 
 	return xf,yf
 end
@@ -69,7 +69,7 @@ end
 
 function coarse_grain_2(arr::Array{Float64,2},x::Array{Float64,1},y::Array{Float64,1},n::Int=1)
 	for i = 1:n
-		arr2 = conv(arr,[1,1]*[1,1]')
+		arr2 = conv(arr,[1,1]*[1,1]')[2:end-1,2:end-1]
 		global arr2_sm = arr2[1:2:end,1:2:end]./4
 		global xo = x[1:2:end]
 		global yo = y[1:2:end]
