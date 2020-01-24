@@ -24,7 +24,7 @@ function equil_sim_test(nvals) #currents should be 0 in equilibrium
 	return err_sim,err_calc,err_all
 end
 
-function boltzmann(x::Array{Float64,1},y::Array{Float64,1},pars::Array{Float64,1}) #boltzmann distribution for a set of parameters. Can be useful for tests
+function boltzmann(x::Array{Float64,1},y::Array{Float64,1},pars::Array{Float64,1},ifext::Int=1) #boltzmann distribution for a set of parameters. Can be useful for tests
 	l = pars[4]
 	k = pars[3]
 	t1 = pars[1]
@@ -36,8 +36,8 @@ function boltzmann(x::Array{Float64,1},y::Array{Float64,1},pars::Array{Float64,1
 	xarr = x*ones(size(y'))
 	yarr = ones(size(x))*y'
 
-	pot = k/2*yarr.^2 + simbase.ext_pot.(xarr,l)
-	return exp.(-pot./tb) #We can always normalize later, shouldn't matter much
+	pot = k/2*yarr.^2 + simbase.ext_pot.(xarr,l)*ifext
+	return exp.(-pot./tb) #We can always normalize later, shouldn't matter
 end
 
 

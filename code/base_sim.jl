@@ -32,7 +32,7 @@ function ext_force(x::Float64,l::Float64)
 end
 
 function timestep!(x::Array{Float64,1},dt::Float64,pars::Array{Float64,1},noise::Array{Float64,1},ifext::Int)
-	b = sqrt.(2*dt*[pars[1],pars[2]])
+	b = sqrt.(dt*[pars[1],pars[2]])
 	a = rhs(x,pars,ifext)
 	x[1] += a[1]*dt+b[1]*noise[1]
 	hop = a[1]*dt+b[1]*noise[1]
