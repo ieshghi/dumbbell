@@ -67,15 +67,11 @@ end
 
 function place_in_lattice!(x::Array{Float64,1},lat::Array{Float64,2},xvals::Array{Float64,1},yvals::Array{Float64,1})
 	xm = x[1]%1 - (sign(x[1])-1)/2
-
-	xposs = xvals.<=xm
-	if sum(xposs)!=0
-		xind = xvals .== maximum(xvals[xposs])
-	else
-		xind = xvals .== maximum(xvals)
-	end
-	yposs = yvals.<=x[2]
-	yind = yvals .== maximum(yvals[yposs])
+	
+	dx = xvals[2]-xvals[1]
+	dy = yvals[2]-yvals[1]
+	xind = (abs.(xm.-xvals).<(dx/2))
+	yind = (abs.(x[2].-yvals).<(dy/2))
 	
 	lat[xind,yind] .+= 1
 end
