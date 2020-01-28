@@ -28,7 +28,7 @@ function gen_dual_lat(lat::Array{Float64,2},x::Array{Float64,1},y::Array{Float64
 	lat_dx = 1/(dx)*(lat-circshift(lat,[1,0])) #This is the slope at the midpoint between two old lattice points.
     lat_dy = specder(lat_n,dy,2)
 
-    #lat_dx = specder(lat_n,dx,1)
+    #oldlat_dx = specder(lat_n,dx,1)
     #lat_dx = (oldlat_dx+circshift(oldlat_dx,[1,0]))./2
 
 	return lat_n,lat_dx,lat_dy,xn,y

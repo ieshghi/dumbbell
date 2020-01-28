@@ -12,9 +12,9 @@ function ext_pot(x::Float64,l::Float64)
 	xm = x%1-(sign(x)-1)/2
 
 	if xm<=l
-		return (x-l)^2/(l^2)
+		return (xm-l)^2/(l^2)
 	else
-		return (x-l)^2/((1-l)^2)
+		return (xm-l)^2/((1-l)^2)
 	end
 end
 
@@ -25,9 +25,9 @@ function ext_force(x::Float64,l::Float64)
 		xm = x%1-(sign(x)-1)/2
 	end
 	if xm<l
-		return 2*(xm-l)./(l^2)
+		return 2*(xm-l)/(l^2)
 	else
-		return 2*(xm-l)./((1-l)^2)
+		return 2*(xm-l)/((1-l)^2)
 	end
 end
 
@@ -72,7 +72,10 @@ function place_in_lattice!(x::Array{Float64,1},lat::Array{Float64,2},xvals::Arra
 	dy = yvals[2]-yvals[1]
 	xind = (abs.(xm.-xvals).<(dx/2))
 	yind = (abs.(x[2].-yvals).<(dy/2))
-	
+
+	if sum(xind)+sum(yind) !=  2
+		print("Error: can't place properly in lattice\n")
+	end
 	lat[xind,yind] .+= 1
 end
 
