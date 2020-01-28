@@ -32,9 +32,8 @@ function ext_force(x::Float64,l::Float64)
 end
 
 function timestep!(x::Array{Float64,1},dt::Float64,pars::Array{Float64,1},noise::Array{Float64,1},ifext::Int)
-	b = sqrt.(dt*[pars[1],pars[2]])
+	b = sqrt.(2*dt*[pars[1],pars[2]])
 	a = rhs(x,pars,ifext)
-	x[1] += a[1]*dt+b[1]*noise[1]
 	hop = a[1]*dt+b[1]*noise[1]
 	x[1] += hop
 	x[2] += a[2]*dt+b[2]*noise[2]-b[1]*noise[1]
@@ -45,10 +44,10 @@ function rhs(x::Array{Float64,1},pars::Array{Float64,1},ifext::Int)
 	l = pars[4]
 	k = pars[3]
 	g = pars[5]	
-	fex = ext_force(x[1],l)*[-1,1]
+	fex = ifext*ext_force(x[1],l)*[-1,1]
 	fspr = k*x[2].*[1,-2]
 	fg = g*[1,0]
-	return ifext*fex+fspr+fg
+	return fex+fspr+fg
 end
 
 function run_and_bin(x0::Array{Float64,1},dt::Float64,pars::Array{Float64,1},nsteps::Int,nx::Int,ny::Int,ymax::Float64,ifext::Int=1)
@@ -58,7 +57,6 @@ function run_and_bin(x0::Array{Float64,1},dt::Float64,pars::Array{Float64,1},nst
 	x = x0
 	maxhop = 0
 	@inbounds for i = 1:nsteps
-			timestep!(x,dt,pars,noise[i,:],ifext)
 			hop = timestep!(x,dt,pars,noise[i,:],ifext)
 			place_in_lattice!(x,lat,xvals,yvals)
 			maxhop += abs(hop)
