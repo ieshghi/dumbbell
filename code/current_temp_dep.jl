@@ -1,5 +1,6 @@
 module current_temp_dep
 using HDF5
+using Statistics
 include("dual_current.jl")
 function get_temps()
 	l = [[] for i = 1:10]
@@ -21,16 +22,17 @@ function get_temps()
 	jvals = zeros(10)
 	for i = 1:10
 		pars = [0.1,ts[i],1,0.7,0]
-		jx,jy,ln,xn,y,fx,fy,lx,ly = dual_current.calc_curr(l[i],pars,x,y,1)
+		jx,jy,ln,xn,y,fx,fy,lx,ly = dual_current.calc_curr(l[i][1],pars,x,y,1)
 		jxo,xo,yo = dual_current.coarse_grain_2(jx,x,y,4)
-		sumj = zeros(size(jxo[1]))
-		dy = y[2]-y[1]
+		sumj = zeros(size(jxo)[1])
+		dy = yo[2]-yo[1]
 		for j = 1:size(jxo)[1]
 			sumj[j] = dy*traprule(jxo[j,:])
 		end
+		jvals[i] = median(sumj)
 	end
 
-	return sumj
+	return jvals
 end
 
 function traprule(a::Array{Float64,1})
@@ -41,4 +43,6 @@ function traprule(a::Array{Float64,1})
 	end
 
 	return s
+end
+
 end
